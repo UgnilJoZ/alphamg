@@ -46,7 +46,7 @@ np_temperature = {
 np_humidity = {
 	offset = 0,
 	scale = 1,
-	spread = {x=102, y=102, z=102},
+	spread = {x=512, y=512, z=512},
 	octaves = 5,
 	seed = 42690,
 	persist = 0.5
