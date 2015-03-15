@@ -162,12 +162,20 @@ function place_bigtree(x,y,z, data, area, c_tree, c_leaves, whitelist)
 	if not whitelist[data[area:index(x, y-1, z)]] then
 		return 0
 	end
+	local big = math.random(0,1) < 0.3
 	nodesphere(x,y,z, 4,2,4, data, area, c_leaves)
 	nodesphere(x,y-2,z, 3,2,3, data, area, c_tree)
 	nodesphere(x,y+10,z, 4,2,4, data, area, c_leaves)
 	nodesphere(x,y+20,z, 5,3,5, data, area, c_leaves)
 	for i = 0,20 do
-		nodering(x,y+i,z, 2, data, area, c_tree)
+		if big then
+			nodering(x,y+i,z, 2, data, area, c_tree)
+		else
+			data[area:index(x, y+i, z)] = c_tree
+			data[area:index(x, y+i, z+1)] = c_tree
+			data[area:index(x+1, y+i, z+1)] = c_tree
+			data[area:index(x+1, y+i, z)] = c_tree
+		end
 	end
 end
 
@@ -185,6 +193,7 @@ function ncmg(minp, maxp, seed)
 	local t0 = os.clock()
 	local chulens = {x=maxp.x-minp.x+1, y=maxp.y-minp.y+1, z=maxp.z-minp.z+1}
 	local imin, imax = {x=minp.x-2, y=minp.y-2, z=minp.z-2}, {x=maxp.x+2, y=maxp.y+2, z=maxp.z+2}
+	local c_ignore = minetest.get_content_id("ignore")
 	local c_air = minetest.get_content_id("air")
 	local c_stone = minetest.get_content_id("default:stone")
 	local c_dirt = minetest.get_content_id("default:dirt")
@@ -226,7 +235,7 @@ function ncmg(minp, maxp, seed)
 	end
 	local mid = underground and overground
 	rv = rv and mid	-- calculate river
-	
+	-- biomes
 	if mid then
 		nvals_temperatures = minetest.get_perlin_map(np_temperature, chulens):get2dMap_flat({x=minp.x, y=minp.z})
 		nvals_humidity = minetest.get_perlin_map(np_humidity, chulens):get2dMap_flat({x=minp.x, y=minp.z})
@@ -235,7 +244,7 @@ function ncmg(minp, maxp, seed)
 		for z = minp.z, maxp.z do
 			biomemap[z] = {}
 			for x = minp.x, maxp.x do
-				if nvals_temperatures[nixz] > 0 then
+				if nvals_temperatures[nixz] > 0.5 then
 					if nvals_humidity[nixz] > 0 then
 						biomemap[z][x] = biome_jungle
 						imax.y = maxp.y + 20
@@ -259,7 +268,20 @@ function ncmg(minp, maxp, seed)
 	if underground and not overground then
 		fillcube(data, area, minp, maxp, c_stone)
 	elseif overground and not underground then
-		fillcube(data, area, minp, maxp, c_air)
+		for z = minp.z,maxp.z do
+			for x = minp.x,maxp.x do
+				for y = minp.y,maxp.y do
+					local vi = area:index(x, y, z)
+					if data[vi] == c_ignore then
+						if y > 0 then
+							data[area:index(x, y, z)] = c_air
+						else
+							data[area:index(x, y, z)] = c_water
+						end
+					end
+				end
+			end
+		end
 	else
 		local nixz = 1
 		for z = minp.z,maxp.z do
