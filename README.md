@@ -5,6 +5,7 @@ Biomes are:
 * Hilly temperate forest
 * Desert
 * Jungle
+
 Sometimes a small river crosses your way.
 
 ## Install
