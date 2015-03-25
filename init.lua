@@ -1,6 +1,6 @@
 np_base = {
 	offset = 0,
-	scale = 50,
+	scale = 32,
 	spread = {x=512, y=512, z=512},
 	octaves = 7,
 	seed = 42692,
@@ -34,10 +34,13 @@ np_river = {
 	persist = 0.6
 }
 
+river_width = 0.15
+river_deepness = 10
+
 np_temperature = {
 	offset = 0,
 	scale = 1,
-	spread = {x=128, y=128, z=128},
+	spread = {x=512, y=512, z=512},
 	octaves = 3,
 	seed = 42689,
 	persist = 0.5
@@ -46,7 +49,7 @@ np_temperature = {
 np_humidity = {
 	offset = 0,
 	scale = 1,
-	spread = {x=64, y=64, z=64},
+	spread = {x=128, y=128, z=128},
 	octaves = 3,
 	seed = 42690,
 	persist = 0.5
@@ -92,8 +95,9 @@ np_iron = {
 -- Biomes
 
 biome_forest_hills	= 1
-biome_desert		= 2
-biome_jungle		= 3
+biome_grassland 	= 2
+biome_desert		= 3
+biome_jungle		= 4
 
 hot_border_temp = 0.7
 jungle_border = 0
@@ -107,7 +111,7 @@ local function LinToNegSin(x)
 end
 
 local function get_river_height(x, w, river_deepness)
-	return LinToNegSin((math.abs(x)-w))*river_deepness/w
+	return LinToNegSin((math.abs(x)-w)*2)*river_deepness/w
 end
 
 local function sq(x)
@@ -272,6 +276,8 @@ function ncmg(minp, maxp, seed)
 	end
 	
 	local tree_whitelist = {[c_dirt]=true, [c_leaf]=true}
+	
+	local veggie_blacklist = {[c_water]=true, [c_air]=true, [c_sand]=true}
 
 	local nvals_base = minetest.get_perlin_map(np_base, chulens):get2dMap_flat({x=minp.x, y=minp.z})
 	local nvals_height_biome = minetest.get_perlin_map(np_height_biome, chulens):get2dMap_flat({x=minp.x, y=minp.z})
@@ -282,7 +288,7 @@ function ncmg(minp, maxp, seed)
 	local n_trees
 
 	local underground, overground, rv = false
-	-- heightmap
+	-- height map
 	local heightmap = {}
 	local biomemap = {}
 	local nixz = 1
@@ -290,9 +296,9 @@ function ncmg(minp, maxp, seed)
 		heightmap[z] = {}
 		for x = minp.x,maxp.x do
 			if nvals_height_biome[nixz] > 0.8 then
-				heightmap[z][x] = nvals_base[nixz] * nvals_basemul[nixz] * ((nvals_height_biome[nixz]-0.8)*2+1) + get_river_height(nvals_rivers[nixz], 0.1, 50)
+				heightmap[z][x] = nvals_base[nixz] * nvals_basemul[nixz] * ((nvals_height_biome[nixz]-0.8)*2+1) + get_river_height(nvals_rivers[nixz], river_width, river_deepness)
 			else
-				heightmap[z][x] = nvals_base[nixz] + get_river_height(nvals_rivers[nixz], 0.1, 50)
+				heightmap[z][x] = nvals_base[nixz] + get_river_height(nvals_rivers[nixz], river_width, river_deepness)
 			end
 			nixz = nixz + 1
 			rv = nvals_rivers[nixz] ~= 0
@@ -302,6 +308,7 @@ function ncmg(minp, maxp, seed)
 	end
 	local mid = underground and overground
 	rv = rv and mid	-- calculate river
+	
 	-- biomes
 	if mid then
 		nvals_temperatures = minetest.get_perlin_map(np_temperature, chulens):get2dMap_flat({x=minp.x, y=minp.z})
@@ -311,7 +318,7 @@ function ncmg(minp, maxp, seed)
 		for z = minp.z, maxp.z do
 			biomemap[z] = {}
 			for x = minp.x, maxp.x do
-				if nvals_temperatures[nixz] > 0.3 then
+				if nvals_temperatures[nixz] > 0.2 then
 					if nvals_humidity[nixz] > 0.3 then
 						biomemap[z][x] = biome_jungle
 						imax.y = maxp.y + 24
@@ -319,7 +326,11 @@ function ncmg(minp, maxp, seed)
 						biomemap[z][x] = biome_desert
 					end
 				else
-					biomemap[z][x] = biome_forest_hills
+					if nvals_humidity[nixz] < -0.5 then
+						biomemap[z][x] = biome_grassland
+					else
+						biomemap[z][x] = biome_forest_hills
+					end
 				end
 				nixz = nixz + 1
 			end
@@ -355,7 +366,7 @@ function ncmg(minp, maxp, seed)
 			for x = minp.x,maxp.x do
 				local height = heightmap[z][x]
 				local c_above, c_top
-				if biomemap[z][x] == biome_forest_hills then
+				if biomemap[z][x] == biome_forest_hills or biomemap[z][x] == biome_grassland then
 					c_above = c_dirt
 					c_top = c_dirt_wg
 				elseif biomemap[z][x] == biome_jungle then
@@ -370,7 +381,7 @@ function ncmg(minp, maxp, seed)
 					if data[vi] == c_ignore then
 						if y > height then
 							if y > 0 then
-								if rv and y <= height - get_river_height(nvals_rivers[nixz], 0.1, 50)-10 then
+								if rv and y <= height - get_river_height(nvals_rivers[nixz], river_width, river_deepness)-10 then
 									data[vi] = c_water
 								else
 									data[vi] = c_air
@@ -383,7 +394,11 @@ function ncmg(minp, maxp, seed)
 						elseif height < 1.5 then
 							data[vi] = c_sand
 						elseif y == math.floor(height) then
-							data[vi] = c_top
+							if get_river_height(nvals_rivers[nixz], river_width, river_deepness) < -8.5 then
+								data[vi] = c_sand
+							else
+								data[vi] = c_top
+							end
 						else
 							data[vi] = c_above
 						end
@@ -458,11 +473,21 @@ function ncmg(minp, maxp, seed)
 							treewait = treewait + 2
 						end
 					end
-					treewait = math.floor(treewait*treewait) + math.random(-3,3)
+					treewait = math.floor(treewait*treewait) + math.random(-3,5)
 				else
 					treewait = treewait-1
-					if x+y+z % 5 == 0 then	-- some random random function for 
-						data[area:index(x,y+1,z)] = c_grass[math.random(1,5)]
+					if biomemap[z][x] == biome_forest_hills then
+						if (math.floor(x+y+z + math.random(1,5))) % 17 == 0 and not veggie_blacklist[data[area:index(x,y,z)]] then	-- some random random function for 
+							data[area:index(x,y+1,z)] = c_grass[math.random(1,3)]
+						end
+					elseif biomemap[z][x] == biome_jungle then
+						if (math.floor(x+y+z + math.random(1,5))) % 7 == 0 and not veggie_blacklist[data[area:index(x,y,z)]] then	-- some random random function for 
+							data[area:index(x,y+1,z)] = c_grass[math.random(1,5)]
+						end
+					elseif biomemap[z][x] == biome_grassland then
+						if (math.floor(x+y+z + math.random(1,5))) % 5 == 0 and not veggie_blacklist[data[area:index(x,y,z)]] then	-- some random random function for 
+							data[area:index(x,y+1,z)] = c_grass[math.random(1,5)]
+						end
 					end
 				end
 			end

@@ -5,6 +5,8 @@ Biomes are:
 * Hilly temperate forest
 * Desert
 * Jungle
+* Grassland
+* Sea
 
 Sometimes a small river crosses your way.
 
