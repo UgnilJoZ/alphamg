@@ -1,28 +1,28 @@
 np_base = {
-	offset = -42,
+	offset = 0,
 	scale = 50,
-	spread = {x=1024, y=1024, z=1024},
-	octaves = 4,
+	spread = {x=512, y=512, z=512},
+	octaves = 7,
 	seed = 42692,
 	persist = 0.6
 }
 
-np_hills = {
+np_height_biome = {
 	offset = 0,
-	scale = 24,
+	scale = 1,
 	spread = {x=128, y=128, z=128},
-	octaves = 5,
+	octaves = 2,
 	seed = 42692,
-	persist = 0.5
+	persist = 0.6
 }
 
-np_hill_heights = {
-	offset = 0.8,
-	scale = 0.5,
-	spread = {x=2560, y=2560, z=2560},
-	octaves = 3,
-	seed = 42692,
-	persist = 0.5
+np_basemul = {
+	offset = 0,
+	scale = 1,
+	spread = {x=64, y=64, z=64},
+	octaves = 4,
+	seed = 42682,
+	persist = 0.6
 }
 
 np_river = {
@@ -37,8 +37,8 @@ np_river = {
 np_temperature = {
 	offset = 0,
 	scale = 1,
-	spread = {x=1024, y=1024, z=1024},
-	octaves = 5,
+	spread = {x=128, y=128, z=128},
+	octaves = 3,
 	seed = 42689,
 	persist = 0.5
 }
@@ -46,15 +46,15 @@ np_temperature = {
 np_humidity = {
 	offset = 0,
 	scale = 1,
-	spread = {x=512, y=512, z=512},
-	octaves = 5,
+	spread = {x=64, y=64, z=64},
+	octaves = 3,
 	seed = 42690,
 	persist = 0.5
 }
 
 np_trees = {
-	offset = 4,
-	scale = 1,
+	offset = 4.5,
+	scale = 2,
 	spread = {x=64, y=64, z=64},
 	octaves = 3,
 	seed = 42692,
@@ -63,10 +63,12 @@ np_trees = {
 
 np_caves = {
 	offset = -1,
-	scale = 1.5,
+	scale = 1,
 	spread = {x=32, y=24, z=32},
-	octaves = 6,
+	octaves = 2,
 	seed = 42692,
+	persist = 0.6,
+	flags = "eased"
 }
 
 np_coal = {
@@ -112,6 +114,10 @@ local function sq(x)
 	return x*x
 end
 
+local function v3add(a,b)
+	return {x=a.x + b.x, y=a.y + b.y, z=a.z + b.z}
+end
+
 
 local function nodering(x,y,z, r, data, area, c_node)
 	if r < 1 then
@@ -134,10 +140,29 @@ local function nodesphere(x,y,z, rx, ry, rz, data, area, c_node)
 	local sqrx = rx*rx
 	local sqry = ry*ry
 	local sqrz = rz*rz
-	for yi = y-ry-1, y+ry+1 do
-	for xi = x-rx-1, x+rx+1 do
-	for zi = z-rz-1, z+rz+1 do
+	for yi = math.floor(y-ry-1), math.floor(y+ry+1) do
+	for xi = math.floor(x-rx-1), math.floor(x+rx+1) do
+	for zi = math.floor(z-rz-1), math.floor(z+rz+1) do
 		if sq(x-xi)/sqrx + sq(z-zi)/sqrz + sq(y-yi)/sqry < 1 then
+			data[area:index(xi, yi, zi)] = c_node
+		end
+	end
+	end
+	end
+end
+
+local function conditioned_nodesphere(x,y,z, rx, ry, rz, data, area, c_node, blacklist)
+	if rx+ry+rz < 1 then
+		return
+	end
+	local sqrx = rx*rx
+	local sqry = ry*ry
+	local sqrz = rz*rz
+	for yi = math.floor(y-ry-1), math.floor(y+ry+1) do
+	for xi = math.floor(x-rx-1), math.floor(x+rx+1) do
+	for zi = math.floor(z-rz-1), math.floor(z+rz+1) do
+		if sq(x-xi)/sqrx + sq(z-zi)/sqrz + sq(y-yi)/sqry < 1
+				and not blacklist[data[area:index(xi, yi, zi)]] then
 			data[area:index(xi, yi, zi)] = c_node
 		end
 	end
@@ -189,11 +214,45 @@ local function fillcube(data, area, minp, maxp, c_node)
 	end
 end
 
+local function scale(min,max, maxi, i)
+	return math.floor(min + (max - min) * i / maxi)
+end
+
+function draw_capsule(data, area, startpos, endpos, radius, c_node)	-- capsule == cylinder with round endings
+	local length = math.sqrt(sq(endpos.z - startpos.z) + sq(endpos.y - startpos.y) + sq(endpos.x - startpos.x))
+	local brushpos = startpos
+	local l = math.floor(length / radius)
+	for i = 0, l do
+		local brushpos = {scale(startpos.x, endpos.x, l, i), scale(startpos.y, endpos.y, l, i), scale(startpos.z, endpos.z, l, i)}
+		nodesphere(brushpos[1], brushpos[2], brushpos[3], radius, radius, radius, data, area, c_node)
+	end
+end
+
+local function start_cave(data, area, startpos, start_arc, radius, length, c_air, node_blacklist)
+	local pos = {startpos.x, startpos.y, startpos.z}
+	local arc = start_arc
+	local updownarc = 0
+	local i = length
+	conditioned_nodesphere(pos[1], pos[2], pos[3], radius, radius, radius, data, area, c_air, node_blacklist)
+	while i>0 do
+		i = i - 1
+		local vector = {math.cos(arc), math.sin(updownarc), math.sin(arc)}
+		pos = {pos[1] + vector[1], pos[2] + vector[2], pos[3] + vector[3]}
+		if not (area:contains(math.floor(pos[1] - radius*2), math.floor(pos[2] - radius*2), math.floor(pos[3] - radius*2))
+				and area:contains(math.floor(pos[1] + radius*2), math.floor(pos[2] + radius*2), math.floor(pos[3] + radius*2))) then
+			break
+		end
+		conditioned_nodesphere(pos[1], pos[2], pos[3], radius, radius, radius, data, area, c_air, node_blacklist)
+		arc = arc + math.random(-0.2, 0.2)
+		updownarc = updownarc + math.random(-0.001, 0.001)
+	end
+end
+
 function ncmg(minp, maxp, seed)
 	local t0 = os.clock()
 	local chulens = {x=maxp.x-minp.x+1, y=maxp.y-minp.y+1, z=maxp.z-minp.z+1}
-	local imin, imax = {x=minp.x-2, y=minp.y-2, z=minp.z-2}, {x=maxp.x+2, y=maxp.y+2, z=maxp.z+2}
-	local c_ignore = minetest.get_content_id("ignore")
+	local imin, imax = {x=minp.x-10, y=minp.y-2, z=minp.z-10}, {x=maxp.x+10, y=maxp.y+2, z=maxp.z+10}
+	local c_ignore = 126
 	local c_air = minetest.get_content_id("air")
 	local c_stone = minetest.get_content_id("default:stone")
 	local c_dirt = minetest.get_content_id("default:dirt")
@@ -207,12 +266,16 @@ function ncmg(minp, maxp, seed)
 	local c_iron = minetest.get_content_id("default:stone_with_iron")
 	local c_jungletree = minetest.get_content_id("default:jungletree")
 	local c_jungleleaves = minetest.get_content_id("default:jungleleaves")
+	local c_grass = {}
+	for i=1,5 do 
+		c_grass[i] = minetest.get_content_id("default:grass_"..i)
+	end
 	
 	local tree_whitelist = {[c_dirt]=true, [c_leaf]=true}
 
 	local nvals_base = minetest.get_perlin_map(np_base, chulens):get2dMap_flat({x=minp.x, y=minp.z})
-	local nvals_hills = minetest.get_perlin_map(np_hills, chulens):get2dMap_flat({x=minp.x, y=minp.z})
-	local nvals_hill_heights = minetest.get_perlin_map(np_hill_heights, chulens):get2dMap_flat({x=minp.x, y=minp.z})
+	local nvals_height_biome = minetest.get_perlin_map(np_height_biome, chulens):get2dMap_flat({x=minp.x, y=minp.z})
+	local nvals_basemul = minetest.get_perlin_map(np_basemul, chulens):get2dMap_flat({x=minp.x, y=minp.z})
 	local nvals_rivers = minetest.get_perlin_map(np_river, chulens):get2dMap_flat({x=minp.x, y=minp.z})
 	local nvals_temperatures
 	local nvals_humidity
@@ -226,7 +289,11 @@ function ncmg(minp, maxp, seed)
 	for z = minp.z,maxp.z do
 		heightmap[z] = {}
 		for x = minp.x,maxp.x do
-			heightmap[z][x] = math.floor(nvals_base[nixz] + nvals_hills[nixz] * nvals_hill_heights[nixz]) + get_river_height(nvals_rivers[nixz], 0.1, 50)
+			if nvals_height_biome[nixz] > 0.8 then
+				heightmap[z][x] = nvals_base[nixz] * nvals_basemul[nixz] * ((nvals_height_biome[nixz]-0.8)*2+1) + get_river_height(nvals_rivers[nixz], 0.1, 50)
+			else
+				heightmap[z][x] = nvals_base[nixz] + get_river_height(nvals_rivers[nixz], 0.1, 50)
+			end
 			nixz = nixz + 1
 			rv = nvals_rivers[nixz] ~= 0
 			underground = underground or (heightmap[z][x] > minp.y)
@@ -244,21 +311,21 @@ function ncmg(minp, maxp, seed)
 		for z = minp.z, maxp.z do
 			biomemap[z] = {}
 			for x = minp.x, maxp.x do
-				if nvals_temperatures[nixz] > 0.5 then
-					if nvals_humidity[nixz] > 0 then
+				if nvals_temperatures[nixz] > 0.3 then
+					if nvals_humidity[nixz] > 0.3 then
 						biomemap[z][x] = biome_jungle
-						imax.y = maxp.y + 20
+						imax.y = maxp.y + 24
 					else
 						biomemap[z][x] = biome_desert
 					end
 				else
 					biomemap[z][x] = biome_forest_hills
 				end
+				nixz = nixz + 1
 			end
 		end
 	end
 
-	local vm, emin, emax
 	local vm = minetest.get_voxel_manip()
 	local emin, emax = vm:read_from_map(imin, imax)
 	local area = VoxelArea:new{MinEdge=emin, MaxEdge=emax}
@@ -286,7 +353,7 @@ function ncmg(minp, maxp, seed)
 		local nixz = 1
 		for z = minp.z,maxp.z do
 			for x = minp.x,maxp.x do
-				local height = math.floor(heightmap[z][x])
+				local height = heightmap[z][x]
 				local c_above, c_top
 				if biomemap[z][x] == biome_forest_hills then
 					c_above = c_dirt
@@ -300,24 +367,26 @@ function ncmg(minp, maxp, seed)
 				end
 				for y = minp.y, maxp.y do
 					local vi = area:index(x, y, z)
-					if y > height then
-						if y > 0 then
-							if rv and y <= height - get_river_height(nvals_rivers[nixz], 0.1, 50)-7 then
-								data[vi] = c_water
+					if data[vi] == c_ignore then
+						if y > height then
+							if y > 0 then
+								if rv and y <= height - get_river_height(nvals_rivers[nixz], 0.1, 50)-10 then
+									data[vi] = c_water
+								else
+									data[vi] = c_air
+								end
 							else
-								data[vi] = c_air
+								data[vi] = c_water
 							end
+						elseif y < height - 8 then
+							data[vi] = c_stone
+						elseif height < 1.5 then
+							data[vi] = c_sand
+						elseif y == math.floor(height) then
+							data[vi] = c_top
 						else
-							data[vi] = c_water
+							data[vi] = c_above
 						end
-					elseif y < height - 8 then
-						data[vi] = c_stone
-					elseif height < 3 then
-						data[vi] = c_sand
-					elseif y == height then
-						data[vi] = c_top
-					else
-						data[vi] = c_above
 					end
 				end
 				nixz = nixz + 1
@@ -325,6 +394,7 @@ function ncmg(minp, maxp, seed)
 		end
 	end
 	-- underground 3d noises
+	local cave_nodes_blacklist = {[c_water]=true, [c_sand]=true}
 	if underground then
 		-- vorbereiten
 		local nvals_caves = minetest.get_perlin_map(np_caves, chulens):get3dMap_flat({x=minp.x, y=minp.y, z=minp.z})
@@ -339,12 +409,15 @@ function ncmg(minp, maxp, seed)
 			for y = minp.y,maxp.y do
 				for x = minp.x,maxp.x do
 					if y <= heightmap[z][x]+1 then
-						if nvals_caves[nixyz] > 0 then
-							data[area:index(x, y, z)] = c_air
-						elseif nvals_iron[nixyz] > 0 and (y <= heightmap[z][x]-8 or math.random(42) <= 1) then
-							data[area:index(x, y, z)] = c_iron
-						elseif nvals_coal[nixyz] > 0 and (y <= heightmap[z][x]-8 or math.random(42) <= 1) then
-							data[area:index(x, y, z)] = c_coal
+						local vi = area:index(x, y, z)
+						if not cave_nodes_blacklist[data[vi]] then
+							if nvals_caves[nixyz] > 0 then
+								data[area:index(x, y, z)] = c_air
+							elseif nvals_iron[nixyz] > 0 and (y <= heightmap[z][x]-8 or math.random(42) <= 1) then
+								data[area:index(x, y, z)] = c_iron
+							elseif nvals_coal[nixyz] > 0 and (y <= heightmap[z][x]-8 or math.random(42) <= 1) then
+								data[area:index(x, y, z)] = c_coal
+							end
 						end
 					end
 					nixyz = nixyz + 1
@@ -352,17 +425,25 @@ function ncmg(minp, maxp, seed)
 			end
 		end
 	end
-	-- trees
+	-- long caves
+	if underground then
+		for i = 1, 30 do
+			local function summand() return math.random(-chulens.y/4, chulens.y/4) end
+			local start = {x=minp.x + summand(), y=minp.y + summand(), z=minp.z + summand()}
+			start_cave(data, area, start, math.random(0, 3.14), 4, 70, c_air, cave_nodes_blacklist)
+		end
+	end
+	-- vegetation
 	if mid then
 		n_trees = minetest.get_perlin(np_trees)
 		local treewait = 0
 		for z = minp.z, maxp.z do
 		for x = minp.x, maxp.x do
-			local y = heightmap[z][x]
-			while (y >= emin.y) and (data[area:index(x, y, z)] == c_air) do
+			local y = math.floor(heightmap[z][x])
+			while (y >= emin.y) and (data[area:index(x, y, z)] == c_air) do	-- causes „tree-flow“
 				y = y-1
 			end
-			while (y <= emax.y) and (data[area:index(x,y+2,z)] ~= c_air) do
+			while (y <= emax.y) and (data[area:index(x,y+2,z)] ~= c_air) do -- causes „double-trees“
 				y = y + 1
 			end
 			if (y > 2) and (y >= emin.y) and (y < emax.y-7) then
@@ -380,6 +461,9 @@ function ncmg(minp, maxp, seed)
 					treewait = math.floor(treewait*treewait) + math.random(-3,3)
 				else
 					treewait = treewait-1
+					if x+y+z % 5 == 0 then	-- some random random function for 
+						data[area:index(x,y+1,z)] = c_grass[math.random(1,5)]
+					end
 				end
 			end
 		end
