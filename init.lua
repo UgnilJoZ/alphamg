@@ -29,7 +29,7 @@ np_river = {
 	offset = 0,
 	scale = 1,
 	spread = {x=512, y=512, z=512},
-	octaves = 3,
+	octaves = 4,
 	seed = 42691,
 	persist = 0.6
 }
@@ -269,6 +269,8 @@ function ncmg(minp, maxp, seed)
 	local c_iron = minetest.get_content_id("default:stone_with_iron")
 	local c_jungletree = minetest.get_content_id("default:jungletree")
 	local c_jungleleaves = minetest.get_content_id("default:jungleleaves")
+	local c_birchtree = minetest.get_content_id("birches:tree")
+	local c_birchleaves = minetest.get_content_id("birches:leaves")
 	local c_grass = {}
 	for i=1,5 do 
 		c_grass[i] = minetest.get_content_id("default:grass_"..i)
@@ -453,6 +455,7 @@ function ncmg(minp, maxp, seed)
 	if mid then
 		n_trees = minetest.get_perlin(np_trees)
 		local treewait = 0
+		local nixz = 1
 		for z = minp.z, maxp.z do
 		for x = minp.x, maxp.x do
 			local y = math.floor(heightmap[z][x])
@@ -468,7 +471,11 @@ function ncmg(minp, maxp, seed)
 					if data[area:index(x,y,z)] ~= c_water then
 						-- jungle?
 						if biomemap[z][x] == biome_forest_hills then
-							place_normtree(x,y-1,z, data, area, c_tree, c_leaf, tree_whitelist)
+							if nvals_humidity[nixz] > 0.7 then
+								draw_birch(area, data, {x=x, y=y, z=z}, c_birchleaves, c_birchtree)
+							else
+								place_normtree(x,y-1,z, data, area, c_tree, c_leaf, tree_whitelist)
+							end
 						elseif biomemap[z][x] == biome_jungle then
 							place_bigtree(x,y-1,z, data, area, c_jungletree, c_jungleleaves, tree_whitelist, pr:next(0,1) < 0.3)
 							treewait = treewait + 2
@@ -492,6 +499,7 @@ function ncmg(minp, maxp, seed)
 					end
 				end
 			end
+			nixz = nixz + 1
 		end
 		end
 	end
