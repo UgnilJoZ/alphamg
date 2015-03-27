@@ -34,7 +34,7 @@ np_river = {
 	persist = 0.6
 }
 
-river_width = 0.15
+river_width = 0.135
 river_deepness = 10
 
 np_temperature = {
@@ -187,11 +187,10 @@ function place_normtree(x,y,z, data, area, c_tree, c_leaves, whitelist)
 	end
 end
 
-function place_bigtree(x,y,z, data, area, c_tree, c_leaves, whitelist)
+function place_bigtree(x,y,z, data, area, c_tree, c_leaves, whitelist, big)
 	if not whitelist[data[area:index(x, y-1, z)]] then
 		return 0
 	end
-	local big = math.random(0,1) < 0.3
 	nodesphere(x,y,z, 4,2,4, data, area, c_leaves)
 	nodesphere(x,y-2,z, 3,2,3, data, area, c_tree)
 	nodesphere(x,y+10,z, 4,2,4, data, area, c_leaves)
@@ -278,6 +277,8 @@ function ncmg(minp, maxp, seed)
 	local tree_whitelist = {[c_dirt]=true, [c_leaf]=true}
 	
 	local veggie_blacklist = {[c_water]=true, [c_air]=true, [c_sand]=true}
+	
+	local pr = PseudoRandom(seed+456)
 
 	local nvals_base = minetest.get_perlin_map(np_base, chulens):get2dMap_flat({x=minp.x, y=minp.z})
 	local nvals_height_biome = minetest.get_perlin_map(np_height_biome, chulens):get2dMap_flat({x=minp.x, y=minp.z})
@@ -428,9 +429,9 @@ function ncmg(minp, maxp, seed)
 						if not cave_nodes_blacklist[data[vi]] then
 							if nvals_caves[nixyz] > 0 then
 								data[area:index(x, y, z)] = c_air
-							elseif nvals_iron[nixyz] > 0 and (y <= heightmap[z][x]-8 or math.random(42) <= 1) then
+							elseif nvals_iron[nixyz] > 0 and (y <= heightmap[z][x]-8 or pr:next(0,42) <= 1) then
 								data[area:index(x, y, z)] = c_iron
-							elseif nvals_coal[nixyz] > 0 and (y <= heightmap[z][x]-8 or math.random(42) <= 1) then
+							elseif nvals_coal[nixyz] > 0 and (y <= heightmap[z][x]-8 or pr:next(0,42) <= 1) then
 								data[area:index(x, y, z)] = c_coal
 							end
 						end
@@ -442,10 +443,10 @@ function ncmg(minp, maxp, seed)
 	end
 	-- long caves
 	if underground then
-		for i = 1, 30 do
-			local function summand() return math.random(-chulens.y/4, chulens.y/4) end
+		for i = 1, 20 do
+			local function summand() return pr:next(-chulens.y/4, chulens.y/4) end
 			local start = {x=minp.x + summand(), y=minp.y + summand(), z=minp.z + summand()}
-			start_cave(data, area, start, math.random(0, 3.14), 4, 70, c_air, cave_nodes_blacklist)
+			start_cave(data, area, start, pr:next(0, 3.14), 4, 70, c_air, cave_nodes_blacklist)
 		end
 	end
 	-- vegetation
@@ -469,24 +470,24 @@ function ncmg(minp, maxp, seed)
 						if biomemap[z][x] == biome_forest_hills then
 							place_normtree(x,y-1,z, data, area, c_tree, c_leaf, tree_whitelist)
 						elseif biomemap[z][x] == biome_jungle then
-							place_bigtree(x,y-1,z, data, area, c_jungletree, c_jungleleaves, tree_whitelist)
+							place_bigtree(x,y-1,z, data, area, c_jungletree, c_jungleleaves, tree_whitelist, pr:next(0,1) < 0.3)
 							treewait = treewait + 2
 						end
 					end
-					treewait = math.floor(treewait*treewait) + math.random(-3,5)
+					treewait = math.floor(treewait*treewait) + pr:next(-3,5)
 				else
 					treewait = treewait-1
 					if biomemap[z][x] == biome_forest_hills then
-						if (math.floor(x+y+z + math.random(1,5))) % 17 == 0 and not veggie_blacklist[data[area:index(x,y,z)]] then	-- some random random function for 
-							data[area:index(x,y+1,z)] = c_grass[math.random(1,3)]
+						if (math.floor(x+y+z + pr:next(1,5))) % 17 == 0 and not veggie_blacklist[data[area:index(x,y,z)]] then	-- some random random function for 
+							data[area:index(x,y+1,z)] = c_grass[pr:next(1,3)]
 						end
 					elseif biomemap[z][x] == biome_jungle then
-						if (math.floor(x+y+z + math.random(1,5))) % 7 == 0 and not veggie_blacklist[data[area:index(x,y,z)]] then	-- some random random function for 
-							data[area:index(x,y+1,z)] = c_grass[math.random(1,5)]
+						if (math.floor(x+y+z + pr:next(1,5))) % 7 == 0 and not veggie_blacklist[data[area:index(x,y,z)]] then	-- some random random function for 
+							data[area:index(x,y+1,z)] = c_grass[pr:next(1,5)]
 						end
 					elseif biomemap[z][x] == biome_grassland then
-						if (math.floor(x+y+z + math.random(1,5))) % 5 == 0 and not veggie_blacklist[data[area:index(x,y,z)]] then	-- some random random function for 
-							data[area:index(x,y+1,z)] = c_grass[math.random(1,5)]
+						if (math.floor(x+y+z + pr:next(1,5))) % 5 == 0 and not veggie_blacklist[data[area:index(x,y,z)]] then	-- some random random function for 
+							data[area:index(x,y+1,z)] = c_grass[pr:next(1,5)]
 						end
 					end
 				end
