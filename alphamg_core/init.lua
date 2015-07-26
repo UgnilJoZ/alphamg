@@ -1,4 +1,5 @@
 alphamg = {}
+
 -- constants
 
 -- The mean of all ground heights
@@ -10,93 +11,48 @@ alphamg.medium_layer_thickness = 7
 -- How high shall the strand be
 alphamg.strand_height = 2.5
 
--- noise params
+-- Print unteresting stuff
+alphamg.verbose = true
 
-alphamg.np_base = {
-	offset = alphamg.ground_level,
-	scale = 32,
-	spread = {x=512, y=512, z=512},
-	octaves = 7,
-	seed = 42692,
-	persist = 0.6
-}
-
-alphamg.np_caves = {
-	offset = -1,
-	scale = 1,
-	spread = {x=32, y=24, z=32},
-	octaves = 2,
-	seed = 42692,
-	persist = 0.6,
-	flags = "eased"
-}
-
--- handler definition
-
--- Handlers are lists of callback functions. You can add yours to do things.
-
-alphamg.on_generating_heightmap = {}
--- This handler is called when a heightmap for a chunk is being generated.
--- The one and only parameter is the heightmap as a flat 2D float array.
--- The result will be used as new heightmap.
--- So, general structure of this callback function:
---
---     function f(heightmap)
---         return heightmap
---     end
---
-
--- Adds a heightmap handler
-function alphamg.add_heightmap_generation_handler(f)
-    table.insert(alphamg.on_generating_heightmap, f)
-end
-
--- Calls all heightmap callback functions
-function alphamg.call_heightmap_handler(heightmap)
-    local hm = heightmap
-    for k, v in pairs(alphamg.on_generating_heightmap) do
-        hm = v(hm)
-    end
-    return hm
-end
-
-
-alphamg.after_chunk_generation = {}
--- Well, this handler is called when a chunk has been generated.
--- The parameters you will get are the heightmap, humidity map, temperature map,
--- special biome map, the biomemap itself containing biome_IDs.
---
---    function(minp, maxp, heightmap, humidity, temperatures, specbiomes, biomes)
---       -- Use this function for generating mobs / vegetation (→alphamg_trees)
---    end
-
--- Adds a chunk handler
-function alphamg.add_chunk_generation_handler(f)
-    table.insert(alphamg.after_chunk_generation, f)
-end
-
--- call all registered chunk handlers
-function alphamg.call_chunk_handler(minp, maxp, heightmap, humidity, temperatures, specbiomes, biomes)
-    for k,v in pairs(alpha_mg.after_chunk_generation) do
-        v(minp, maxp, heightmap, humidity, temperatures, specbiomes, biomes)
-    end
-end
+dofile(minetest.get_modpath("alphamg_core").."/noise.lua")
+dofile(minetest.get_modpath("alphamg_core").."/handlers.lua")
 
 -- main function
 function alphamg.ncmg(minp, maxp, seed)
-    print ("[alphamg] ncmg")
+	if alphamg.verbose then
+    	print ("[alphamg] ncmg")
+	end
     local t0 = os.clock()
     local chulens = {x=maxp.x-minp.x+1, y=maxp.y-minp.y+1, z=maxp.z-minp.z+1}
 
-    -- noises
-    local nvals_base = minetest.get_perlin_map(alphamg.np_base, chulens):get2dMap_flat({x=minp.x, y=minp.z})
-    local nvals_caves = minetest.get_perlin_map(alphamg.np_caves, chulens):get3dMap_flat({x=minp.x, y=minp.z, z=minp.z})
+	-- basic height noise
+	local nvals_base = minetest.get_perlin_map(alphamg.np_base, chulens):get2dMap_flat({x=minp.x, y=minp.z})
 
     -- heightmap
     local heightmap = {}
-    for i = 1, chulens.x * chulens.y do
+    for i = 1, chulens.x * chulens.z do
         heightmap[i] = nvals_base[i]
     end
+	alphamg.call_heightmap_handler(heightmap)
+	-- get to know if biomemap/cave noises are needed
+	local gen_underground
+	local gen_biomes
+	for i = 1, chulens.x * chulens.z do
+		gen_underground = gen_underground or heightmap[i] > minp.y
+		gen_biomes = gen_biomes or (heightmap[i] < maxp.y
+			and heightmap[i] > minp.y - alphamg.medium_layer_thickness)
+	end
+
+	-- noises
+	local nvals_caves
+	local nvals_biomes
+	if gen_underground then
+    	nvals_caves = minetest.get_perlin_map(alphamg.np_caves, chulens):get3dMap_flat({x=minp.x, y=minp.z, z=minp.z})
+		nvals_coal = minetest.get_perlin_map(alphamg.np_coal, chulens):get3dMap_flat({x=minp.x, y=minp.z, z=minp.z})
+	end
+	if gen_biomes then
+		nvals_biomes = minetest.get_perlin_map(alphamg.np_caves, chulens):get3dMap_flat({x=minp.x, y=minp.z, z=minp.z})
+	end
 
     -- content ids
     local c_air = minetest.get_content_id("air")
@@ -106,10 +62,9 @@ function alphamg.ncmg(minp, maxp, seed)
 	local c_sand = minetest.get_content_id("default:sand")
 	local c_desert_sand = minetest.get_content_id("default:desert_sand")
 	local c_water = minetest.get_content_id("default:water_source")
-	local c_tree = minetest.get_content_id("default:tree")
-	local c_leaf = minetest.get_content_id("default:leaves")
 	local c_coal = minetest.get_content_id("default:stone_with_coal")
 	local c_iron = minetest.get_content_id("default:stone_with_iron")
+	local c_copper = minetest.get_content_id("default:stone_with_copper")
 	local c_jungletree = minetest.get_content_id("default:jungletree")
 	local c_jungleleaves = minetest.get_content_id("default:jungleleaves")
 
@@ -141,7 +96,12 @@ function alphamg.ncmg(minp, maxp, seed)
                 else
                     -- stone / caves / …
                     if y < height - alphamg.medium_layer_thickness then
-                        data[nixyz] = c_stone
+						-- coal?
+						if nvals_coal[nixyz] > 0 then
+							data[nixyz] = c_coal
+						else
+							data[nixyz] = c_stone
+						end
                     else
                         -- dirt/sand layer
                         if height <= alphamg.strand_height then
@@ -152,12 +112,12 @@ function alphamg.ncmg(minp, maxp, seed)
                             data[nixyz] = c_dirt
                         end
                     end
-                end
 
-                -- caves or node in blacklist?
-                if not cave_blacklist_nodes[data[nixyz]]
-                and nvals_caves[nixyz] > 0 then
-                    data[nixyz] = c_air
+					--cave or node in blacklist?
+					if not cave_blacklist_nodes[data[nixyz]]
+					and nvals_caves[nixyz] > 0 then
+						data[nixyz] = c_air
+					end
                 end
 
                 nixyz = nixyz + 1
@@ -170,13 +130,20 @@ function alphamg.ncmg(minp, maxp, seed)
 
     -- write world data
     vm:set_data(data)
-	--vm:set_lighting({day=0, night=0})
-	--vm:calc_lighting()
 	vm:write_to_map(data)
+	if alphamg.verbose then
+		print ("[alphamg] before handler "..math.ceil((os.clock() - t0) * 1000).." ms")
+	end
+	alphamg.call_chunk_handler(minp, maxp, heightmap, humidity, temperatures, specbiomes, biomes)
+	vm:update_map()	-- more efficient way possible to calc lighting??
 
 	local chugent = math.ceil((os.clock() - t0) * 1000)
-	print ("[alphamg] "..chugent.." ms")
+	if alphamg.verbose then
+		print ("[alphamg] "..chugent.." ms")
+	end
 end
 
-print ("[alphamg] Registriere Funktion…")
+if alphamg.verbose then
+	print ("[alphamg] Registriere Funktion…")
+end
 minetest.register_on_generated(alphamg.ncmg)
