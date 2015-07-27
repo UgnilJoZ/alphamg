@@ -14,7 +14,7 @@ local function add_snow(data, vi, c_air, c_ignore, c_snow)
 	end
 end
 
-function default.grow_new_apple_tree(pos)
+function alphamg.grow_new_apple_tree(pos)
 	local path = minetest.get_modpath("default") .. "/schematics/apple_tree.mts"
 	minetest.place_schematic({x = pos.x - 2, y = pos.y - 1, z = pos.z - 2},
 		path, 0, nil, false)
@@ -121,6 +121,30 @@ local function add_snow(data, vi, c_air, c_ignore, c_snow)
 	if node_id == c_air or node_id == c_ignore then
 		data[vi] = c_snow
 	end
+end
+
+function alphamg.grow_birch(pos)
+	local x, y, z = pos.x, pos.y, pos.z
+	local maxy = y + 11 -- Trunk top
+
+	local c_air = minetest.get_content_id("air")
+	local c_ignore = minetest.get_content_id("ignore")
+	local c_birchtree = minetest.get_content_id("birches:tree")
+	local c_pine_needles  = minetest.get_content_id("birches:leaves")
+
+	local vm = minetest.get_voxel_manip()
+	local minp, maxp = vm:read_from_map(
+		{x = x - 3, y = y - 1, z = z - 3},
+		{x = x + 3, y = maxy + 3, z = z + 3}
+	)
+	local a = VoxelArea:new({MinEdge = minp, MaxEdge = maxp})
+	local data = vm:get_data()
+
+
+
+	vm:set_data(data)
+	vm:write_to_map()
+	vm:update_map()
 end
 
 function alphamg.grow_pine_tree(pos)

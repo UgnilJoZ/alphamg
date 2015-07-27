@@ -1,7 +1,7 @@
 print("[birches]")
-birches_brew = {}
+birches = {}
 
-function birches_brew.node_sound_defaults(table)
+function birches.node_sound_defaults(table)
 	table = table or {}
 	table.footstep = table.footstep or
 			{name="", gain=1.0}
@@ -12,17 +12,17 @@ function birches_brew.node_sound_defaults(table)
 	return table
 end
 
-function birches_brew.node_sound_wood_defaults(table)
+function birches.node_sound_wood_defaults(table)
 	table = table or {}
 	table.footstep = table.footstep or
 			{name="default_wood_footstep", gain=0.5}
 	table.dug = table.dug or
 			{name="default_wood_footstep", gain=1.0}
-	birches_brew.node_sound_defaults(table)
+	birches.node_sound_defaults(table)
 	return table
 end
 
-function birches_brew.node_sound_leaves_defaults(table)
+function birches.node_sound_leaves_defaults(table)
 	table = table or {}
 	table.footstep = table.footstep or
 			{name="default_grass_footstep", gain=0.35}
@@ -32,7 +32,7 @@ function birches_brew.node_sound_leaves_defaults(table)
 			{name="default_dig_crumbly", gain=0.4}
 	table.place = table.place or
 			{name="default_place_node", gain=1.0}
-	birches_brew.node_sound_defaults(table)
+	birches.node_sound_defaults(table)
 	return table
 end
 
@@ -42,7 +42,7 @@ minetest.register_node("birches:tree", {
 	paramtype2 = "facedir",
 	is_ground_content = false,
 	groups = {tree=1,choppy=2,oddly_breakable_by_hand=1,flammable=2},
-	sounds = birches_brew.node_sound_wood_defaults(),
+	sounds = birches.node_sound_wood_defaults(),
 
 	on_place = minetest.rotate_node
 })
@@ -51,7 +51,7 @@ minetest.register_node("birches:wood", {
 	description = "Birch Planks",
 	tiles = {"birches_birchwood.png"},
 	groups = {choppy=2,oddly_breakable_by_hand=2,flammable=3,wood=1},
-	sounds = birches_brew.node_sound_wood_defaults(),
+	sounds = birches.node_sound_wood_defaults(),
 })
 
 minetest.register_node("birches:leaves", {
@@ -78,9 +78,9 @@ minetest.register_node("birches:leaves", {
 			}
 		}
 	},
-	sounds = {},birches_brew.node_sound_leaves_defaults(),
+	sounds = {},birches.node_sound_leaves_defaults(),
 
-	after_place_node = birches_brew.after_place_leaves,
+	after_place_node = birches.after_place_leaves,
 })
 
 minetest.register_node("birches:sapling", {
@@ -97,7 +97,7 @@ minetest.register_node("birches:sapling", {
 		fixed = {-0.3, -0.5, -0.3, 0.3, 0.35, 0.3}
 	},
 	groups = {snappy=2,dig_immediate=3,flammable=2,attached_node=1,sapling=1},
-	sounds = birches_brew.node_sound_leaves_defaults(),
+	sounds = birches.node_sound_leaves_defaults(),
 })
 
 local function disc(data, area, pos, r, node)
@@ -121,7 +121,7 @@ function draw_birch(area, data, pos, c_leaf, c_tree)
 	end
 end
 
-function grow_birch(pos)
+function birches.grow_birch(pos)
 	c_leaf = minetest.get_content_id("birches:leaves")
 	c_tree = minetest.get_content_id("birches:tree")
 	

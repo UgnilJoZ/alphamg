@@ -37,21 +37,34 @@ function alphamg.alphamg_life(minp, maxp, heightmap, humidity, temperatures)
                 and minetest.get_node({x=x, y=height+1, z=z}).name == "air" then
                     -- tree?
                     if temperatures[nixz] > alphamg.desert_temp then
-                    elseif temperatures[nixz] > alphamg.savanne_temp then
-                        if math.random() < 0.001 then
-                            default.grow_new_acacia_tree({x=x, y=height+2, z=z})
-                        end
+                        -- nothing! except cactii
+                    elseif temperatures[nixz] > alphamg.savanna_temp then
+                        -- jungle?
+                        if humidity[nixz] > alphamg.savanna_hum then
+                            if math.random() < 0.04 then
+                                alphamg.grow_new_jungle_tree({x=x, y=height+2, z=z})
+                            end
+                        -- savanne?
+                        else
+                            if math.random() < 0.001 then
+                                default.grow_new_acacia_tree({x=x, y=height+2, z=z})
+                            end
+                        end-- if humidity
                     elseif temperatures[nixz] < alphamg.snow_temp then
                         if math.random() < 0.005 then
                             alphamg.grow_pine_tree({x=x, y=height, z=z})
                         end
                     else
-                        if math.random() < 0.02 then
-                            default.grow_new_apple_tree({x=x, y=height+2, z=z})
+                        if math.random() < 0.04 then
+                            if humidity[nixz] > 0.5 then
+                                birches.grow_birch({x=x, y=height, z=z})
+                            else
+                                default.grow_new_apple_tree({x=x, y=height+2, z=z})
+                            end
                         end
-                    end
-                end
-            end
+                    end-- if temperatures
+                end-- if tree_blacklist
+            end-- if height
 
             nixz = nixz + 1
         end-- for x

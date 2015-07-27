@@ -15,13 +15,18 @@ alphamg.strand_height = 2.5
 alphamg.verbose = true
 
 -- under what temperature value snow is generated
-alphamg.snow_temp = -0.33
+alphamg.snow_temp = -0.5
 
 -- over what temperature value deserts are generated
 alphamg.desert_temp = 0.6
 
--- between savanne_temp and desert_temp the grass is dry
-alphamg.savanne_temp = 0.17
+-- between savanna_temp and desert_temp the grass is dry
+alphamg.savanna_temp = 0.17
+
+-- … if humidity is under savanna_hum
+alphamg.savanna_hum = 0
+
+alphamg.wet_hum = 0.5
 
 dofile(minetest.get_modpath("alphamg_core").."/noise.lua")
 dofile(minetest.get_modpath("alphamg_core").."/handlers.lua")
@@ -64,8 +69,8 @@ function alphamg.ncmg(minp, maxp, seed)
 	local nvals_temperature
 	local nvals_humidity
 	if gen_biomes then
-		nvals_temperature = minetest.get_perlin_map(alphamg.np_temperature, chulens):get3dMap_flat({x=minp.x, y=minp.z, z=minp.z})
-		nvals_humidity = minetest.get_perlin_map(alphamg.np_humidity, chulens):get3dMap_flat({x=minp.x, y=minp.z, z=minp.z})
+		nvals_temperature = minetest.get_perlin_map(alphamg.np_temperature, chulens):get2dMap_flat({x=minp.x, y=minp.z, z=minp.z})
+		nvals_humidity = minetest.get_perlin_map(alphamg.np_humidity, chulens):get2dMap_flat({x=minp.x, y=minp.z, z=minp.z})
 	end
 
     -- content ids
@@ -107,14 +112,15 @@ function alphamg.ncmg(minp, maxp, seed)
 	                if y > height then
 	                    if y > alphamg.ground_level then
 	                        data[nixyz] = c_air
-	                    elseif nvals_temperature and nvals_temperature[nixz] < alphamg.snow_temp then
+	                    elseif nvals_temperature and y == alphamg.ground_level
+						and nvals_temperature[nixz] < alphamg.snow_temp then
 							data[nixyz] = c_ice
 						else
 	                        data[nixyz] = c_water
 	                    end
 	                -- ground/underground
 	                else
-	                    -- stone / caves / …
+	                    -- stone / …
 	                    if y < height - alphamg.medium_layer_thickness then
 							-- coal? iron?
 							if y < height - 42 and nvals_copper[nixyz] > 0 then
@@ -132,9 +138,11 @@ function alphamg.ncmg(minp, maxp, seed)
 
 								-- surface: grass, snow, …?
 								local temp = nvals_temperature[nixz]
+								local hum = nvals_humidity[nixz]
 								if temp > alphamg.desert_temp then
 									data[nixyz] = c_desert_sand
-								elseif temp > alphamg.savanne_temp then
+								elseif temp > alphamg.savanna_temp
+									and hum < alphamg.savanna_hum then
 									data[nixyz] = c_dirt_wdg
 								elseif temp < alphamg.snow_temp then
 									data[nixyz] = c_dirt_ws

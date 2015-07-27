@@ -1,1 +1,3 @@
 default
+alphamg_core
+birches
