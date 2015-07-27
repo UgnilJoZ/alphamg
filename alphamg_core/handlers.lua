@@ -4,11 +4,11 @@
 
 alphamg.on_generating_heightmap = {}
 -- This handler is called when a heightmap for a chunk is being generated.
--- The one and only parameter is the heightmap as a flat 2D float array.
+-- The parameters are the heightmap as a flat 2D float array and minp,maxp.
 -- The result will be used as new heightmap.
 -- So, general structure of this callback function:
 --
---     function f(heightmap)
+--     function f(heightmap, minp,maxp)
 --         return heightmap
 --     end
 --
@@ -19,10 +19,10 @@ function alphamg.add_heightmap_generation_handler(f)
 end
 
 -- Calls all heightmap callback functions
-function alphamg.call_heightmap_handler(heightmap)
+function alphamg.call_heightmap_handler(heightmap, minp, maxp)
     local hm = heightmap
     for k, v in pairs(alphamg.on_generating_heightmap) do
-        hm = v(hm)
+        hm = v(hm, minp, maxp)
     end
     return hm
 end

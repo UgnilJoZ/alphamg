@@ -35,14 +35,10 @@ function alphamg.ncmg(minp, maxp, seed)
     local chulens = {x=maxp.x-minp.x+1, y=maxp.y-minp.y+1, z=maxp.z-minp.z+1}
 
 	-- basic height noise
-	local nvals_base = minetest.get_perlin_map(alphamg.np_base, chulens):get2dMap_flat({x=minp.x, y=minp.z})
+	local heightmap = minetest.get_perlin_map(alphamg.np_base, chulens):get2dMap_flat({x=minp.x, y=minp.z})
 
     -- heightmap
-    local heightmap = {}
-    for i = 1, chulens.x * chulens.z do
-        heightmap[i] = nvals_base[i]
-    end
-	alphamg.call_heightmap_handler(heightmap)
+	heightmap = alphamg.call_heightmap_handler(heightmap, minp, maxp)
 	-- get to know if biomemap/cave noises are needed
 	local gen_underground
 	local gen_biomes

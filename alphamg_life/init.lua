@@ -7,7 +7,9 @@ local tree_blacklist = {
 dofile(minetest.get_modpath("alphamg_life").."/functions.lua")
 
 function alphamg.alphamg_life(minp, maxp, heightmap, humidity, temperatures)
-    print("[alphamg.alphamg_life]")
+    if alphamg.verbose then
+        print("[alphamg.alphamg_life]")
+    end
     local nixz = 1
     for z = minp.z,maxp.z do
         for x = minp.x,maxp.x do
