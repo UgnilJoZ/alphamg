@@ -11,7 +11,7 @@ Biomes will be:
 Sometimes a small river will cross your way.
 
 ## Install
-To install, put the lua file into "{Your minetest directory}/mods/alphamg".
+To install, put this repository's content into "{Your minetest directory}/mods/alphamg".
 
 ## License
 WTFPL – the Do-What-The-Fuck-You-Want-To Public License.
