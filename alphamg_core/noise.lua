@@ -50,7 +50,7 @@ alphamg.np_coal = {
 alphamg.np_iron = {
 	offset = -1,
 	scale = 1,
-	spread = {x=4, y=4, z=4},
+	spread = {x=6, y=6, z=6},
 	octaves = 2,
 	seed = 42693,
 	persist = 0.5

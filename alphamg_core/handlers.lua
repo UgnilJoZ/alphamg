@@ -45,8 +45,8 @@ function alphamg.add_chunk_generation_handler(f)
 end
 
 -- call all registered chunk handlers
-function alphamg.call_chunk_handler(minp, maxp, heightmap, humidity, temperatures)
+function alphamg.call_chunk_handler(vm, minp, maxp, heightmap, humidity, temperatures)
     for k,v in pairs(alphamg.after_chunk_generation) do
-        v(minp, maxp, heightmap, humidity, temperatures)
+        v(vm, minp, maxp, heightmap, humidity, temperatures)
     end
 end

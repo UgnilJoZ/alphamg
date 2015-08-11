@@ -179,7 +179,7 @@ function alphamg.ncmg(minp, maxp, seed)
 	if alphamg.verbose then
 		print ("[alphamg] before handler "..math.ceil((os.clock() - t0) * 1000).." ms")
 	end
-	alphamg.call_chunk_handler(minp, maxp, heightmap, nvals_humidity, nvals_temperature)
+	alphamg.call_chunk_handler(vm, minp, maxp, heightmap, nvals_humidity, nvals_temperature)
 	if gen_biomes or gen_underground then
 		vm:update_map()	-- more efficient way to calc lighting possible ??
 	end
