@@ -4,6 +4,8 @@ local tree_blacklist = {
 	["default:water"]=true
 }
 
+local pr	-- pseudo random
+
 dofile(minetest.get_modpath("alphamg_life").."/functions.lua")
 
 function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
@@ -11,91 +13,64 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
 		print("[alphamg.alphamg_life]")
 	end
 
+	-- when needed, initialize random generator
+	if not pr then
+		pr = PseudoRandom(minetest.get_mapgen_params().seed)
+	end
+
+	-- assert existance of biome defining maps for this chunk
+	if not (humidity and temperatures) then
+		return
+	end
+
+	print("Halloo!")
+
 	local nixz = 1
 	for z = minp.z,maxp.z do
 		for x = minp.x,maxp.x do
-			local height = heightmap[nixz]
+			if nixz % 100 == 0 then print(nixz) end
+			local height = math.floor(heightmap[nixz])
 
 			-- check height
-			if height >= minp.y and height <= maxp.y
-			and height > alphamg.strand_height then
-				-- height really cool?
-				while tree_blacklist[minetest.get_node({x=x, y=height, z=z}).name] do
-					height = height - 1
-					if heightmap[nixz] - height > 21 then
-						break
-					end
-				end-- while
-		
-				while minetest.get_node({x=x, y=height+1, z=z}).name ~= "air" do
-					height = height + 1
-					if heightmap[nixz] + height > 21 then
-						break
-					end
-				end-- while
+			if (height > alphamg.strand_height) and (minp.y <= height) and (height <= maxp.y) then
+				local random = pr:next() -- random number ∊ {0..32767}
 
-				if not tree_blacklist[minetest.get_node({x=x, y=height, z=z}).name]
-				and minetest.get_node({x=x, y=height+1, z=z}).name == "air" then
-					-- deco?
-					if temperatures[nixz] > alphamg.desert_temp then
-						-- nothing! except cactii
-					elseif temperatures[nixz] > alphamg.savanna_temp then
-						-- jungle?
-						if humidity[nixz] > alphamg.savanna_hum then
-							if math.random() < 0.04 then
-								alphamg.grow_new_jungle_tree({x=x, y=height+2, z=z})
-							end
-						-- savanne?
-						else
-							if math.random() < 0.001 then
-								default.grow_new_acacia_tree({x=x, y=height+2, z=z})
-							end
-						end-- if humidity
-					elseif temperatures[nixz] < alphamg.snow_temp then
-						if math.random() < 0.005 then
-							alphamg.grow_pine_tree({x=x, y=height, z=z})
+				-- biome checking
+				if temperatures[nixz] < alphamg.snow_temp then
+					-- snow biome
+					if random < 512	then -- p = 1/64
+						alphamg.grow_pine_tree({x=x, y=height, z=z})
+					end
+				elseif temperatures[nixz] > alphamg.desert_temp then
+					-- sand desert; todo: cactii
+				elseif temperatures[nixz] > alphamg.savanna_temp then
+					-- tropical hotness
+					if humidity[nixz] < alphamg.savanna_hum then
+						-- savanna
+						if random < 256 then -- p = 1/128
+							default.grow_new_acacia_tree({x=x, y=height+2, z=z})
 						end
 					else
-						if math.random() < 0.04 then
-							if humidity[nixz] > 0.5 then
-								birches.grow_birch({x=x, y=height, z=z})
-							else
-								default.grow_new_apple_tree({x=x, y=height+2, z=z})
-							end
+						-- djungle
+						if random < 1024 then -- p = 1:32
+							alphamg.grow_new_jungle_tree({x=x, y=height+2, z=z})
+							-- todo: grass/flowers/other tree kinds
 						end
-					end
-
-					--tree?
-					if temperatures[nixz] > alphamg.desert_temp then
-						-- nothing! except cactii
-					elseif temperatures[nixz] > alphamg.savanna_temp then
-						-- jungle?
-						if humidity[nixz] > alphamg.savanna_hum then
-							if math.random() < 0.04 then
-								alphamg.grow_new_jungle_tree({x=x, y=height+2, z=z})
-							end
-						-- savanne?
-						else
-							if math.random() < 0.001 then
-								default.grow_new_acacia_tree({x=x, y=height+2, z=z})
-							end
-						end-- if humidity
-					elseif temperatures[nixz] < alphamg.snow_temp then
-						if math.random() < 0.005 then
-							alphamg.grow_pine_tree({x=x, y=height, z=z})
+					end-- if tropical hot
+				else
+					-- temperate climate
+					if humidity[nixz] < alphamg.wet_hum then
+						if random < 1024 then -- 1:32
+							birches.grow_birch({x=x, y=height, z=z})
 						end
 					else
-						if math.random() < 0.04 then
-							if humidity[nixz] > 0.5 then
-								birches.grow_birch({x=x, y=height, z=z})
-							else
-								default.grow_new_apple_tree({x=x, y=height+2, z=z})
-							end
+						if random < 1536 then -- ~1:20
+							default.grow_new_apple_tree({x=x, y=height+2, z=z})
 						end
-					end-- if temperatures
-				end-- if tree_blacklist
+					end
+				end-- if temperature
 			end-- if height
-	
+
 			nixz = nixz + 1
 		end-- for x
 	end-- for z
