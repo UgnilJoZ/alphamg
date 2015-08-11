@@ -20,7 +20,7 @@ alphamg.snow_temp = -0.5
 -- over what temperature value deserts are generated
 alphamg.desert_temp = 0.6
 
--- between savanna_temp and desert_temp the grass is dry
+-- between savanna_temp and desert_temp the grass is dry, but only …
 alphamg.savanna_temp = 0.17
 
 -- … if humidity is under savanna_hum
