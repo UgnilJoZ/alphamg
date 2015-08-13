@@ -194,3 +194,7 @@ if alphamg.verbose then
 	print ("[alphamg] Registriere Funktion…")
 end
 minetest.register_on_generated(alphamg.ncmg)
+
+minetest.register_on_mapgen_init(function(mgparams)
+	minetest.set_mapgen_params({mgname="singlenode", flags="nolight", flagmask="nolight"})
+end)
