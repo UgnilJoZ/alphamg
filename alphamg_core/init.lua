@@ -50,7 +50,7 @@ function alphamg.ncmg(minp, maxp, seed)
 	for i = 1, chulens.x * chulens.z do
 		gen_underground = gen_underground or heightmap[i] > minp.y
 		gen_biomes = gen_biomes or (heightmap[i] < maxp.y
-			and heightmap[i] > minp.y - alphamg.medium_layer_thickness)
+			and heightmap[i] >= minp.y - alphamg.medium_layer_thickness)
 	end
 
 	-- noises
@@ -130,14 +130,14 @@ function alphamg.ncmg(minp, maxp, seed)
 								data[nixyz] = c_stone
 							end
 						else
+							local temp = nvals_temperature and nvals_temperature[nixz]
+							local hum = nvals_humidity and nvals_humidity[nixz]
 							-- dirt/sand layer
 							if height <= alphamg.strand_height then
 								data[nixyz] = c_sand
 							elseif y == math.floor(height) then
 
 								-- surface: grass, snow, …?
-								local temp = nvals_temperature[nixz]
-								local hum = nvals_humidity[nixz]
 								if temp > alphamg.desert_temp then
 									data[nixyz] = c_desert_sand
 								elseif temp > alphamg.savanna_temp
@@ -179,9 +179,7 @@ function alphamg.ncmg(minp, maxp, seed)
 		print ("[alphamg] before handler "..math.ceil((os.clock() - t0) * 1000).." ms")
 	end
 	alphamg.call_chunk_handler(vm, minp, maxp, heightmap, nvals_humidity, nvals_temperature)
-	if gen_biomes or gen_underground then
-		vm:update_map()	-- more efficient way to calc lighting possible ??
-	end
+	vm:update_map()	-- more efficient way to calc lighting possible ??
 
 	local chugent = math.ceil((os.clock() - t0) * 1000)
 	if alphamg.verbose then
@@ -195,5 +193,5 @@ end
 minetest.register_on_generated(alphamg.ncmg)
 
 minetest.register_on_mapgen_init(function(mgparams)
-	minetest.set_mapgen_params({mgname="singlenode", flags="nolight", flagmask="nolight"})
+	minetest.set_mapgen_params({mgname="singlenode"})
 end)

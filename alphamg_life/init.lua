@@ -75,7 +75,7 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
 						end
 					else
 						-- djungle
-						if random < 1024 then -- p = 1:32
+						if random < 1536 then -- p = ~1:20
 							alphamg.grow_new_jungle_tree({x=x, y=height, z=z})
 						else
 							if random < 8192 then
@@ -90,7 +90,6 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
 					if humidity[nixz] > alphamg.wet_hum then
 						if random < 1024 then -- 1:32
 							birches.grow_birch({x=x, y=height, z=z})
-							print(humidity[nixz])
 						elseif random < 2048 then
 							local nr = random % table.getn(forest_deco) + 1
 							set_deco({x=x, y=height+1, z=z}, {name=forest_deco[nr]})

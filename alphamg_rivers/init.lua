@@ -7,8 +7,8 @@ alphamg.np_river = {
 	persist = 0.7
 }
 -- turns a common noise into a "web"-shaped noise
-local function web_noise(noiseval)
-    local x = 1-13*math.abs(noiseval)
+local function web_noise(noiseval, thickness)
+    local x = 1-thickness*math.abs(noiseval)
     if x < 0 then
         return 0
     else
@@ -27,7 +27,8 @@ function alphamg.add_river(heightmap, minp,maxp)
     for z = minp.z,maxp.z do
         for x = minp.x,maxp.x do
             if hm[nixz] > 0 then
-                hm[nixz] = -(2 * web_noise(river_noise[nixz])-1) * hm[nixz]
+		local thickness = 11 + hm[nixz] / 10
+                hm[nixz] = -(2 * web_noise(river_noise[nixz], thickness)-1) * hm[nixz]
             end
             nixz = nixz + 1
         end
