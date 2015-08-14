@@ -122,8 +122,8 @@ function draw_birch(area, data, pos, c_leaf, c_tree)
 end
 
 function birches.grow_birch(pos)
-	c_leaf = minetest.get_content_id("birches:leaves")
-	c_tree = minetest.get_content_id("birches:tree")
+	local c_leaf = minetest.get_content_id("birches:leaves")
+	local c_tree = minetest.get_content_id("birches:tree")
 	
 	local vm = minetest.get_voxel_manip()
 	local minp, maxp = vm:read_from_map(
