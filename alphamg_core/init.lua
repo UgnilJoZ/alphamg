@@ -34,15 +34,15 @@ dofile(minetest.get_modpath("alphamg_core").."/handlers.lua")
 -- main function
 function alphamg.ncmg(minp, maxp, seed)
 	if alphamg.verbose then
-    	print ("[alphamg] ncmg")
+	print ("[alphamg] ncmg")
 	end
-    local t0 = os.clock()
-    local chulens = {x=maxp.x-minp.x+1, y=maxp.y-minp.y+1, z=maxp.z-minp.z+1}
+	local t0 = os.clock()
+	local chulens = {x=maxp.x-minp.x+1, y=maxp.y-minp.y+1, z=maxp.z-minp.z+1}
 
 	-- basic height noise
 	local heightmap = minetest.get_perlin_map(alphamg.np_base, chulens):get2dMap_flat({x=minp.x, y=minp.z})
 
-    -- heightmap
+	-- heightmap
 	heightmap = alphamg.call_heightmap_handler(heightmap, minp, maxp)
 	-- get to know if biomemap/cave noises are needed
 	local gen_underground
@@ -60,21 +60,21 @@ function alphamg.ncmg(minp, maxp, seed)
 	local nvals_copper
 	local nvals_biomes
 	if gen_underground then
-    	nvals_caves = minetest.get_perlin_map(alphamg.np_caves, chulens):get3dMap_flat({x=minp.x, y=minp.y, z=minp.z})
-		nvals_coal = minetest.get_perlin_map(alphamg.np_coal, chulens):get3dMap_flat({x=minp.x, y=minp.y, z=minp.z})
-		nvals_iron = minetest.get_perlin_map(alphamg.np_iron, chulens):get3dMap_flat({x=minp.x, y=minp.y, z=minp.z})
-		nvals_copper = minetest.get_perlin_map(alphamg.np_copper, chulens):get3dMap_flat({x=minp.x, y=minp.y, z=minp.z})
+		nvals_caves = minetest.get_perlin_map(alphamg.np_caves, chulens):get3dMap_flat(minp)
+		nvals_coal = minetest.get_perlin_map(alphamg.np_coal, chulens):get3dMap_flat(minp)
+		nvals_iron = minetest.get_perlin_map(alphamg.np_iron, chulens):get3dMap_flat(minp)
+		nvals_copper = minetest.get_perlin_map(alphamg.np_copper, chulens):get3dMap_flat(minp)
 	end
 
 	local nvals_temperature
 	local nvals_humidity
 	if gen_biomes then
-		nvals_temperature = minetest.get_perlin_map(alphamg.np_temperature, chulens):get2dMap_flat({x=minp.x, y=minp.z, z=minp.z})
-		nvals_humidity = minetest.get_perlin_map(alphamg.np_humidity, chulens):get2dMap_flat({x=minp.x, y=minp.z, z=minp.z})
+		nvals_temperature = minetest.get_perlin_map(alphamg.np_temperature, chulens):get2dMap_flat({x=minp.x, y=minp.z})
+		nvals_humidity = minetest.get_perlin_map(alphamg.np_humidity, chulens):get2dMap_flat({x=minp.x, y=minp.z})
 	end
 
-    -- content ids
-    local c_air = minetest.get_content_id("air")
+	-- content ids
+	local c_air = minetest.get_content_id("air")
 	local c_stone = minetest.get_content_id("default:stone")
 	local c_dirt = minetest.get_content_id("default:dirt")
 	local c_dirt_wg = minetest.get_content_id("default:dirt_with_grass")
@@ -90,38 +90,37 @@ function alphamg.ncmg(minp, maxp, seed)
 	local c_jungletree = minetest.get_content_id("default:jungletree")
 	local c_jungleleaves = minetest.get_content_id("default:jungleleaves")
 
-    local cave_blacklist_nodes = {[c_sand]=true, [c_water]=true}
+	local cave_blacklist_nodes = {[c_sand]=true, [c_water]=true}
 
-    -- get world data
-    local vm = minetest.get_voxel_manip()
+	-- get world data
+	local vm = minetest.get_voxel_manip()
 	local emin, emax = vm:read_from_map(minp, maxp)
 	local area = VoxelArea:new{MinEdge=emin, MaxEdge=emax}
 	local data = vm:get_data()
 
-    -- modify world data
-    local nixyz = 1
-    local nixz = 1
+	-- modify world data
+	local nixyz = 1
+	local nixz = 1
 
-    for z = minp.z,maxp.z do
+	for z = minp.z,maxp.z do
 		for y = minp.y,maxp.y do
 			for x = minp.x,maxp.x do
 				if true then
-	                local height = heightmap[nixz]
+					local height = heightmap[nixz]
 
-	                -- above ground
-	                if y > height then
-	                    if y > alphamg.ground_level then
-	                        data[nixyz] = c_air
-	                    elseif nvals_temperature and y == alphamg.ground_level
-						and nvals_temperature[nixz] < alphamg.snow_temp then
+					-- above ground
+					if y > height then
+						if y > alphamg.ground_level then
+							data[nixyz] = c_air
+						elseif nvals_temperature and y == alphamg.ground_level and nvals_temperature[nixz] < alphamg.snow_temp then
 							data[nixyz] = c_ice
 						else
-	                        data[nixyz] = c_water
-	                    end
-	                -- ground/underground
-	                else
-	                    -- stone / …
-	                    if y < height - alphamg.medium_layer_thickness then
+							data[nixyz] = c_water
+						end
+					-- ground/underground
+					else
+						-- stone / …
+						if y < height - alphamg.medium_layer_thickness then
 							-- coal? iron?
 							if y < height - 42 and nvals_copper[nixyz] > 0 then
 								data[nixyz] = c_copper
@@ -130,11 +129,11 @@ function alphamg.ncmg(minp, maxp, seed)
 							else
 								data[nixyz] = c_stone
 							end
-	                    else
-	                        -- dirt/sand layer
-	                        if height <= alphamg.strand_height then
-	                            data[nixyz] = c_sand
-	                        elseif y == math.floor(height) then
+						else
+							-- dirt/sand layer
+							if height <= alphamg.strand_height then
+								data[nixyz] = c_sand
+							elseif y == math.floor(height) then
 
 								-- surface: grass, snow, …?
 								local temp = nvals_temperature[nixz]
@@ -147,34 +146,34 @@ function alphamg.ncmg(minp, maxp, seed)
 								elseif temp < alphamg.snow_temp then
 									data[nixyz] = c_dirt_ws
 								else-- if temp in {snow_temp .. savanne_temp}
-	                            	data[nixyz] = c_dirt_wg
+									data[nixyz] = c_dirt_wg
 								end-- if temp
 
-	                        elseif temp and temp > 0.67 then
+							elseif temp and temp > 0.67 then
 								data[nixyz] = c_desert_sand
 							else
-	                            data[nixyz] = c_dirt
-	                        end-- if height <= strand_height
-	                    end-- if y < height - medium_layer_thickness
+								data[nixyz] = c_dirt
+							end-- if height <= strand_height
+						end-- if y < height - medium_layer_thickness
 
 						-- cave or node in blacklist?
 						if not cave_blacklist_nodes[data[nixyz]]
 						and nvals_caves[nixyz] > 0 then
 							data[nixyz] = c_air
 						end
-	                end-- else (= if not y > height)
+					end-- else (= if not y > height)
 
-	                nixyz = nixyz + 1
-	                nixz = nixz + 1
+					nixyz = nixyz + 1
+					nixz = nixz + 1
 				end
-            end-- for x
-            nixz = nixz - chulens.x
-        end-- for y
-        nixz = nixz + chulens.x
-    end-- for z
+			end-- for x
+			nixz = nixz - chulens.x
+		end-- for y
+		nixz = nixz + chulens.x
+	end-- for z
 
-    -- write world data
-    vm:set_data(data)
+	-- write world data
+	vm:set_data(data)
 	vm:write_to_map(data)
 	if alphamg.verbose then
 		print ("[alphamg] before handler "..math.ceil((os.clock() - t0) * 1000).." ms")
