@@ -60,10 +60,10 @@ function alphamg.ncmg(minp, maxp, seed)
 	local nvals_copper
 	local nvals_biomes
 	if gen_underground then
-    	nvals_caves = minetest.get_perlin_map(alphamg.np_caves, chulens):get3dMap_flat({x=minp.x, y=minp.z, z=minp.z})
-		nvals_coal = minetest.get_perlin_map(alphamg.np_coal, chulens):get3dMap_flat({x=minp.x, y=minp.z, z=minp.z})
-		nvals_iron = minetest.get_perlin_map(alphamg.np_iron, chulens):get3dMap_flat({x=minp.x, y=minp.z, z=minp.z})
-		nvals_copper = minetest.get_perlin_map(alphamg.np_copper, chulens):get3dMap_flat({x=minp.x, y=minp.z, z=minp.z})
+    	nvals_caves = minetest.get_perlin_map(alphamg.np_caves, chulens):get3dMap_flat({x=minp.x, y=minp.y, z=minp.z})
+		nvals_coal = minetest.get_perlin_map(alphamg.np_coal, chulens):get3dMap_flat({x=minp.x, y=minp.y, z=minp.z})
+		nvals_iron = minetest.get_perlin_map(alphamg.np_iron, chulens):get3dMap_flat({x=minp.x, y=minp.y, z=minp.z})
+		nvals_copper = minetest.get_perlin_map(alphamg.np_copper, chulens):get3dMap_flat({x=minp.x, y=minp.y, z=minp.z})
 	end
 
 	local nvals_temperature
