@@ -24,7 +24,7 @@ alphamg.desert_temp = 0.6
 alphamg.savanna_temp = 0.17
 
 -- … if humidity is under savanna_hum
-alphamg.savanna_hum = 0
+alphamg.savanna_hum = -0.25
 
 alphamg.wet_hum = 0.5
 

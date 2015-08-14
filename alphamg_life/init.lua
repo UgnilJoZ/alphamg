@@ -68,11 +68,11 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
 						-- savanna
 						if random < 128 then -- p = 1/128
 							default.grow_new_acacia_tree({x=x, y=height+2, z=z})
+						elseif random < 512 then
+							-- dried little plants
+							local nr = random % table.getn(savanna_deco) + 1
+							set_deco({x=x, y=height+2, z=z}, {name=savanna_deco[nr]})
 						end
-					elseif random < 512 then
-						-- dried little plants
-						local nr = random % table.getn(savanna_deco) + 1
-						set_deco({x=x, y=height+2, z=z}, {name=savanna_deco[nr]})
 					else
 						-- djungle
 						if random < 1024 then -- p = 1:32
@@ -87,14 +87,15 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
 					end-- if tropical hot
 				else
 					-- temperate climate
-					if humidity[nixz] < alphamg.wet_hum then
+					if humidity[nixz] > alphamg.wet_hum then
 						if random < 1024 then -- 1:32
 							birches.grow_birch({x=x, y=height, z=z})
+							print(humidity[nixz])
 						elseif random < 2048 then
 							local nr = random % table.getn(forest_deco) + 1
 							set_deco({x=x, y=height+1, z=z}, {name=forest_deco[nr]})
 						end
-					elseif humidity[nixz] > alphamg.savanna_hum then
+					elseif humidity[nixz] < alphamg.savanna_hum then
 						if random < 8192 then
 							local nr = random % table.getn(grassland_deco) + 1
 							set_deco({x=x, y=height+1, z=z}, {name=grassland_deco[nr]})
