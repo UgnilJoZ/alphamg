@@ -90,8 +90,11 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
 					if humidity[nixz] < alphamg.wet_hum then
 						if random < 1024 then -- 1:32
 							birches.grow_birch({x=x, y=height, z=z})
+						elseif random < 2048 then
+							local nr = random % table.getn(forest_deco) + 1
+							set_deco({x=x, y=height+1, z=z}, {name=forest_deco[nr]})
 						end
-					elseif temperatures[nixz] > alphamg.desert_temp then
+					elseif humidity[nixz] > alphamg.savanna_hum then
 						if random < 8192 then
 							local nr = random % table.getn(grassland_deco) + 1
 							set_deco({x=x, y=height+1, z=z}, {name=grassland_deco[nr]})
