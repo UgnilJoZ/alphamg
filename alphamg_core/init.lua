@@ -105,7 +105,7 @@ function alphamg.ncmg(minp, maxp, seed)
 	for z = minp.z,maxp.z do
 		for y = minp.y,maxp.y do
 			for x = minp.x,maxp.x do
-				if true then
+				if true then -- how to implement a check if a node was set before?
 					local height = heightmap[nixz]
 
 					-- above ground
