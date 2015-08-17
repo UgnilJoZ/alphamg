@@ -38,17 +38,16 @@ alphamg.np_caves = {
 }
 
 alphamg.np_coal = {
-	offset = -1,
+	offset = -0.75,
 	scale = 1,
-	spread = {x=8, y=8, z=8},
+	spread = {x=4, y=4, z=4},
 	octaves = 2,
 	seed = 42692,
-	persist = 0.6,
-	flags = "eased"
+	persist = 0.5,
 }
 
 alphamg.np_iron = {
-	offset = -1,
+	offset = 0.75,
 	scale = 1,
 	spread = {x=6, y=6, z=6},
 	octaves = 2,

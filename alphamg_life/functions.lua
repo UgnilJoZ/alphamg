@@ -52,6 +52,11 @@ function alphamg.grow_new_apple_tree(pos)
 		path, 0, nil, false)
 end
 
+function alphamg.grow_cactus(pos)
+	for i=0,2 do
+		minetest.set_node({x=pos.x, y=pos.y+i, z=pos.z}, {name="cactus"})
+	end
+end
 
 local function sq(x)
 	return x*x

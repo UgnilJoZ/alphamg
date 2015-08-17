@@ -13,11 +13,15 @@ local savanna_deco = {"default:dry_shrub"}
 local grassland_deco = flowers
 for i = 1,5 do
 	table.insert(djungle_deco, "default:grass_"..i)
+	table.insert(djungle_deco, "default:grass_"..i)
+	table.insert(grassland_deco, "default:grass_"..i)
 	table.insert(grassland_deco, "default:grass_"..i)
 	table.insert(savanna_deco, "default:dry_grass_"..i)
 end
 
-local forest_deco = {"default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4"}
+local forest_deco = {"default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "default:grass_1", "default:grass_2", "default:grass_3", "default:grass_4", "flowers:mushroom_brown", "lowers:mushroom_red"}
+
+local desert_deco = {"default:dry_shrub"}-- not used while it's only one element → directly set
 
 dofile(minetest.get_modpath("alphamg_life").."/functions.lua")
 
@@ -71,7 +75,7 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
 						elseif random < 512 then
 							-- dried little plants
 							local nr = random % table.getn(savanna_deco) + 1
-							set_deco({x=x, y=height+2, z=z}, {name=savanna_deco[nr]})
+							set_deco({x=x, y=height+1, z=z}, {name=savanna_deco[nr]})
 						end
 					else
 						-- djungle
@@ -95,7 +99,7 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
 							set_deco({x=x, y=height+1, z=z}, {name=forest_deco[nr]})
 						end
 					elseif humidity[nixz] < alphamg.savanna_hum then
-						if random < 8192 then
+						if random < 12288 then
 							local nr = random % table.getn(grassland_deco) + 1
 							set_deco({x=x, y=height+1, z=z}, {name=grassland_deco[nr]})
 						end
