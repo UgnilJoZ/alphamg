@@ -17,7 +17,8 @@ I will also try to implement "becks" – tiny small rivers that do not divide la
 
 ## Install
 To install, put this repository's content into "{Your minetest directory}/mods/alphamg".
-If you have git installed, you can go to your mods directory and type `https://github.com/UgnilJoZ/alphamg.git`.
+
+If you have git installed, you can go to your mods directory and type `git clone https://github.com/UgnilJoZ/alphamg.git`.
 
 ## Technical structure
 This actually a modpack. I wanted the MG to be modulary because the last try was "too many" code at one place.
