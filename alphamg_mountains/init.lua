@@ -1,7 +1,7 @@
 alphamg.np_mountains = {
 	offset = 0,
 	scale = 1,
-	spread = {x=256, y=256, z=256},
+	spread = {x=512, y=512, z=512},
 	octaves = 2,
 	seeddiff = 42696,
 	persist = 0.7
