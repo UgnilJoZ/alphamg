@@ -16,9 +16,11 @@ Sometimes a river will cross your way. There are also mountains.
 I will also try to implement "becks" – tiny small rivers that do not divide land, but flow over it.
 
 ## Install
-To install, put this repository's content into "{Your minetest directory}/mods/alphamg".
+To install, put this repository's content into "{Your minetest directory}\mods\alphamg". (On Unixoids like Linux, there will be of course "forward" slashes.)
 
 If you have git installed, you can go to your mods directory and type `git clone https://github.com/UgnilJoZ/alphamg.git`.
+
+Updating will be done with executing `git pull` in the mod's directory.
 
 ## Screens
 I hope this link will work: https://www.dropbox.com/sh/j6oqbrf4mja3py5/AAA9oVKGinec6eoehU-FxKNGa?dl=0
