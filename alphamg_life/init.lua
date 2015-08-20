@@ -116,7 +116,7 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
 							end
 						end-- if humidity
 					end-- if temperature
-				elseif height > 0 then	-- if strand
+				elseif height >= 0 then	-- if strand
 					local random = pr:next() -- random number ∊ {0..32767}
 					if random < 128 then
 						alphamg.grow_papyrus({x=x, y=height+1, z=z}, 3 + random%2) height = 3 or 4
