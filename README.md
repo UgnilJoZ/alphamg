@@ -11,9 +11,11 @@ Biomes are:
 * Taiga
 
 Sometimes a river will cross your way. There are also mountains.
-(I call the last two "height biomes" – they will coexist with the ones in list)
+(I call the last two "height biomes" – they will coexist with the ones in the list)
 
 I will also try to implement "becks" – tiny small rivers that do not divide land, but flow over it.
+
+Thread in the Minetest forum: https://forum.minetest.net/viewtopic.php?f=9&t=13074
 
 ## Install
 To install, put this repository's content into "{Your minetest directory}\mods\alphamg". (On Unixoids like Linux, there will be of course "forward" slashes.)
@@ -23,7 +25,7 @@ If you have git installed, you can go to your mods directory and type `git clone
 Updating will be done with executing `git pull` in the mod's directory.
 
 ## Screens
-I hope this link will work: https://www.dropbox.com/sh/j6oqbrf4mja3py5/AAA9oVKGinec6eoehU-FxKNGa?dl=0
+Here is a gallery with screenshots: https://github.com/UgnilJoZ/alphamg/blob/master/Screenshots.md
 
 ## Technical structure
 This is actually a modpack. I wanted the MG to be modulary because the last try was "too many" code at one place.
@@ -38,4 +40,3 @@ This is actually a modpack. I wanted the MG to be modulary because the last try 
 
 ## License
 WTFPL – the Do-What-The-Fuck-You-Want-To Public License.
-Oh wait – I have taken the GPL-licensed tree growing code from minetest_game. Hmmm...
