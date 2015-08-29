@@ -35,8 +35,8 @@ alphamg.after_chunk_generation = {}
 -- The parameters you will get are the heightmap, humidity map, and the temperature map
 -- Only the heightmap is surely assigned, other values can be nil.
 --
---    function(minp, maxp, heightmap, humidity, temperatures)
---       -- Use this function for generating mobs / vegetation (→alphamg_life)
+--    function(minp, maxp, heightmap, humidity, temperatures, biome_map)
+--       -- Use this function for generating mobs / vegetation depending on climate/biomes (→alphamg_life)
 --    end
 
 -- Adds a chunk handler
@@ -45,8 +45,8 @@ function alphamg.add_chunk_generation_handler(f)
 end
 
 -- call all registered chunk handlers
-function alphamg.call_chunk_handler(vm, minp, maxp, heightmap, humidity, temperatures)
+function alphamg.call_chunk_handler(vm, minp, maxp, heightmap, humidity, temperatures, biomemap)
     for k,v in pairs(alphamg.after_chunk_generation) do
-        v(vm, minp, maxp, heightmap, humidity, temperatures)
+        v(vm, minp, maxp, heightmap, humidity, temperatures, biomemap)
     end
 end

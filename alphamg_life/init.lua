@@ -35,10 +35,6 @@ local function set_deco(pos, node)
 end
 
 function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
-	if alphamg.verbose then
-		print("[alphamg.alphamg_life]")
-	end
-
 	-- when needed, initialize random generator
 	if not pr then
 		pr = PseudoRandom(minetest.get_mapgen_params().seed)
@@ -47,6 +43,10 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
 	-- assert existance of biome defining maps for this chunk
 	if not (humidity and temperatures) then
 		return
+	end
+
+	if alphamg.verbose then
+		print("[alphamg.alphamg_life]")
 	end
 
 	local nixz = 1

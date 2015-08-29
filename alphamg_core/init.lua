@@ -28,13 +28,23 @@ alphamg.savanna_hum = -0.25
 
 alphamg.wet_hum = 0.5
 
+-- Biome IDs
+bid_Beach        = 0
+bid_DarkForest   = 1
+bid_BrightForest = 2
+bid_Grassland    = 3
+bid_RainForest   = 4
+bid_Desert       = 5
+bid_Savanna      = 6
+bid_Taiga        = 7
+
 dofile(minetest.get_modpath("alphamg_core").."/noise.lua")
 dofile(minetest.get_modpath("alphamg_core").."/handlers.lua")
 
 -- main function
-function alphamg.ncmg(minp, maxp, seed)
+function alphamg.chunkfunc(minp, maxp, seed)
 	if alphamg.verbose then
-	print ("[alphamg] ncmg")
+		print ("[alphamg] ncmg")
 	end
 	local t0 = os.clock()
 	local chulens = {x=maxp.x-minp.x+1, y=maxp.y-minp.y+1, z=maxp.z-minp.z+1}
@@ -44,6 +54,7 @@ function alphamg.ncmg(minp, maxp, seed)
 
 	-- heightmap
 	heightmap = alphamg.call_heightmap_handler(heightmap, minp, maxp)
+
 	-- get to know if biomemap/cave noises are needed
 	local gen_underground
 	local gen_biomes
@@ -58,7 +69,7 @@ function alphamg.ncmg(minp, maxp, seed)
 	local nvals_coal
 	local nvals_iron
 	local nvals_copper
-	local nvals_biomes
+	local biome_map = {}
 	if gen_underground then
 		nvals_caves = minetest.get_perlin_map(alphamg.np_caves, chulens):get3dMap_flat(minp)
 		nvals_coal = minetest.get_perlin_map(alphamg.np_coal, chulens):get3dMap_flat(minp)
@@ -71,6 +82,38 @@ function alphamg.ncmg(minp, maxp, seed)
 	if gen_biomes then
 		nvals_temperature = minetest.get_perlin_map(alphamg.np_temperature, chulens):get2dMap_flat({x=minp.x, y=minp.z})
 		nvals_humidity = minetest.get_perlin_map(alphamg.np_humidity, chulens):get2dMap_flat({x=minp.x, y=minp.z})
+
+		-- biome map
+		local nixz = 0
+		for z = minp.z,maxp.z do
+			for x = minp.x,maxp.x do
+				nixz = nixz + 1
+				local temp = nvals_temperature[nixz]
+				if heightmap[nixz] < alphamg.strand_height then
+					biome_map[nixz] = bid_Beach
+				elseif temp < alphamg.snow_temp then
+					biome_map[nixz] = bid_Taiga
+				elseif temp > alphamg.desert_temp then
+					biome_map[nixz] = bid_Desert
+				elseif temp > alphamg.savanna_temp then
+					-- hot
+					if nvals_humidity[nixz] < alphamg.savanna_hum then
+						biome_map[nixz] = bid_Savanna
+					else
+						biome_map[nixz] = bid_RainForest
+					end
+				else
+					-- temperate
+					if nvals_humidity[nixz] < alphamg.savanna_hum then
+						biome_map[nixz] = bid_Grassland
+					elseif nvals_humidity[nixz] < alphamg.wet_hum then
+						biome_map[nixz] = bid_DarkForest
+					else
+						biome_map[nixz] = bid_BrightForest
+					end
+				end
+			end-- for x
+		end-- for -y
 	end
 
 	-- content ids
@@ -130,30 +173,23 @@ function alphamg.ncmg(minp, maxp, seed)
 								data[nixyz] = c_stone
 							end
 						else
-							local temp = nvals_temperature and nvals_temperature[nixz]
-							local hum = nvals_humidity and nvals_humidity[nixz]
-							-- dirt/sand layer
-							if height <= alphamg.strand_height then
-								data[nixyz] = c_sand
-							elseif y == math.floor(height) then
-
-								-- surface: grass, snow, …?
-								if temp > alphamg.desert_temp then
-									data[nixyz] = c_desert_sand
-								elseif temp > alphamg.savanna_temp
-									and hum < alphamg.savanna_hum then
-									data[nixyz] = c_dirt_wdg
-								elseif temp < alphamg.snow_temp then
-									data[nixyz] = c_dirt_ws
-								else-- if temp in {snow_temp .. savanne_temp}
-									data[nixyz] = c_dirt_wg
-								end-- if temp
-
-							elseif temp and temp > 0.67 then
-								data[nixyz] = c_desert_sand
+							-- Dirt? Sand? Snow?
+							local biome = biome_map[nixz]
+							if y == math.floor(heightmap[nixz]) then
+								local materials = {-- Translation {Biome → Surface material} but without Forests, Grassland
+									[bid_Beach  ] = c_sand        ,
+									[bid_Desert ] = c_desert_sand ,
+									[bid_Savanna] = c_dirt_wdg    ,
+									[bid_Taiga  ] = c_dirt_ws
+								}
+								data[nixyz] = materials[biome] or c_dirt_wg
 							else
-								data[nixyz] = c_dirt
-							end-- if height <= strand_height
+								local materials = {-- Translation {Biome → Ground material}
+									[bid_Beach ] = c_sand       ,
+									[bid_Desert] = c_desert_sand
+								}
+								data[nixyz] = materials[biome] or c_dirt
+							end
 						end-- if y < height - medium_layer_thickness
 
 						-- cave or node in blacklist?
@@ -178,7 +214,7 @@ function alphamg.ncmg(minp, maxp, seed)
 	if alphamg.verbose then
 		print ("[alphamg] before handler "..math.ceil((os.clock() - t0) * 1000).." ms")
 	end
-	alphamg.call_chunk_handler(vm, minp, maxp, heightmap, nvals_humidity, nvals_temperature)
+	alphamg.call_chunk_handler(vm, minp, maxp, heightmap, nvals_humidity, nvals_temperature, biome_map)
 	vm:update_map()	-- more efficient way to calc lighting possible ??
 
 	local chugent = math.ceil((os.clock() - t0) * 1000)
@@ -190,7 +226,7 @@ end
 if alphamg.verbose then
 	print ("[alphamg] Registriere Funktion…")
 end
-minetest.register_on_generated(alphamg.ncmg)
+minetest.register_on_generated(alphamg.chunkfunc)
 
 minetest.register_on_mapgen_init(function(mgparams)
 	minetest.set_mapgen_params({mgname="singlenode"})
