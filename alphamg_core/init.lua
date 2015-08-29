@@ -26,7 +26,12 @@ alphamg.savanna_temp = 0.17
 -- … if humidity is under savanna_hum
 alphamg.savanna_hum = -0.25
 
+-- Depending on temperature, generate birch or rain forests when over this humidity.
 alphamg.wet_hum = 0.5
+
+-- Because not every chunk is initialised with air, we need another way to check if we should override a node.
+-- Solution: Lua Table with node IDs known to "grow" out of a chunk. Otherwise we have areas with cut trees.
+alphamg.ignore_content = {}
 
 -- Biome IDs
 bid_Beach        = 0
@@ -148,7 +153,7 @@ function alphamg.chunkfunc(minp, maxp, seed)
 	for z = minp.z,maxp.z do
 		for y = minp.y,maxp.y do
 			for x = minp.x,maxp.x do
-				if true then -- how to implement a check if a node was set before?
+				if not alphamg.ignore_content[data[nixyz]] then -- if there is no wood/leaf/… at (x,y,z)
 					local height = heightmap[nixz]
 
 					-- above ground
