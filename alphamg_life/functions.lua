@@ -137,6 +137,10 @@ local function add_snow(data, vi, c_air, c_ignore, c_snow)
 end
 
 function alphamg.grow_birch(pos)
+	local ground = minetest.get_node(pos).name
+	if minetest.get_node_group(ground, "soil") < 1 then
+		return
+	end
 	local x, y, z = pos.x, pos.y, pos.z
 	local maxy = y + 11 -- Trunk top
 
@@ -160,7 +164,11 @@ function alphamg.grow_birch(pos)
 	vm:update_map()
 end
 
-function alphamg.grow_pine_tree(pos)
+function alphamg.grow_pine_tree(pos, snow)
+	local ground = minetest.get_node(pos).name
+	if minetest.get_node_group(ground, "soil") < 1 then
+		return
+	end
 	local x, y, z = pos.x, pos.y, pos.z
 	local maxy = y + math.random(9, 13) -- Trunk top
 

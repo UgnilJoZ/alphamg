@@ -82,7 +82,7 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures,
 						end
 					elseif biome == bid_RainForest then
 						-- djungle
-						if random < 1536 then -- p = ~1:20
+						if random < 2048 then -- p = ~1:16
 							alphamg.grow_new_jungle_tree({x=x, y=height, z=z})
 						elseif random < 8192 then
 							-- little plant

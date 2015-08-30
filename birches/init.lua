@@ -122,6 +122,11 @@ function draw_birch(area, data, pos, c_leaf, c_tree)
 end
 
 function birches.grow_birch(pos)
+	local ground = minetest.get_node(pos).name
+	if minetest.get_node_group(ground, "soil") < 1 then
+		return
+	else print(ground)
+	end
 	local c_leaf = minetest.get_content_id("birches:leaves")
 	local c_tree = minetest.get_content_id("birches:tree")
 	

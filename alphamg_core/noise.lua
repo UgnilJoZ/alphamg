@@ -2,7 +2,7 @@
 
 alphamg.np_base = {
 	offset = alphamg.ground_level,
-	scale = 32,
+	scale = 24,
 	spread = {x=512, y=512, z=512},
 	octaves = 7,
 	seeddiff = 42688,

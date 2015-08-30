@@ -29,6 +29,9 @@ alphamg.savanna_hum = -0.25
 -- Depending on temperature, generate birch or rain forests when over this humidity.
 alphamg.wet_hum = 0.5
 
+-- If in the right temperature range, generate grass land under this humidity.
+alphamg.dry_hum = -0.6
+
 -- Because not every chunk is initialised with air, we need another way to check if we should override a node.
 -- Solution: Lua Table with IDs of nodes known to "grow" out of a chunk. Otherwise we have areas with cut trees.
 alphamg.ignore_content = {}
@@ -115,7 +118,7 @@ function alphamg.chunkfunc(minp, maxp, seed)
 					end
 				else
 					-- temperate
-					if nvals_humidity[nixz] < alphamg.savanna_hum then
+					if nvals_humidity[nixz] < alphamg.dry_hum then
 						biome_map[nixz] = bid_Grassland
 					elseif nvals_humidity[nixz] < alphamg.wet_hum then
 						biome_map[nixz] = bid_DarkForest
