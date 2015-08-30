@@ -34,7 +34,7 @@ local function set_deco(pos, node)
 	end
 end
 
-function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
+function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures, biomemap)
 	-- when needed, initialize random generator
 	if not pr then
 		pr = PseudoRandom(minetest.get_mapgen_params().seed)
@@ -56,71 +56,63 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures)
 
 			-- check height
 			if (minp.y <= height) and (height <= maxp.y) then
-				if height > alphamg.strand_height then
+				if height >= 0 then
 					local random = pr:next() -- random number ∊ {0..32767}
+					local biome = biomemap[nixz]
 
 					-- biome checking
-					if temperatures[nixz] < alphamg.snow_temp then
+					if biome == bid_Taiga then
 						-- snow biome
 						if random < 512	then -- p = 1/64
 							alphamg.grow_pine_tree({x=x, y=height, z=z})
 						end
-					elseif temperatures[nixz] > alphamg.desert_temp then
+					elseif biome == bid_Desert then
 						-- sand desert
 						if random < 96 then -- p = 1:256
 							alphamg.grow_cactus({x=x, y=height, z=z}, 4 + (random % 2))-- height is 4 or 5 (3 or 4 over ground)
 						end
-					elseif temperatures[nixz] > alphamg.savanna_temp then
-						-- tropical hotness
-						if humidity[nixz] < alphamg.savanna_hum then
-							-- savanna
-							if random < 64 then -- p = 1/256
-								default.grow_new_acacia_tree({x=x, y=height+2, z=z})
-							elseif random < 512 then
-								-- dried little plants
-								local nr = random % table.getn(savanna_deco) + 1
-								set_deco({x=x, y=height+1, z=z}, {name=savanna_deco[nr]})
-							end
-						else
-							-- djungle
-							if random < 1536 then -- p = ~1:20
-								alphamg.grow_new_jungle_tree({x=x, y=height, z=z})
-							else
-								if random < 8192 then
-									-- little plant
-									local nr = random % table.getn(djungle_deco) + 1
-									set_deco({x=x, y=height+1, z=z}, {name=djungle_deco[nr]})
-								end
-							end
-						end-- if tropical hot
-					else
-						-- temperate climate
-						if humidity[nixz] > alphamg.wet_hum then
-							if random < 1024 then -- 1:32
-								birches.grow_birch({x=x, y=height, z=z})
-							elseif random < 2048 then
-								local nr = random % table.getn(forest_deco) + 1
-								set_deco({x=x, y=height+1, z=z}, {name=forest_deco[nr]})
-							end
-						elseif humidity[nixz] < alphamg.savanna_hum then
-							if random < 12288 then
-								local nr = random % table.getn(grassland_deco) + 1
-								set_deco({x=x, y=height+1, z=z}, {name=grassland_deco[nr]})
-							end
-						else
-							if random < 1536 then -- ~1:20
-								default.grow_new_apple_tree({x=x, y=height+2, z=z})
-							elseif random < 2048 then
-								local nr = random % table.getn(forest_deco) + 1
-								set_deco({x=x, y=height+1, z=z}, {name=forest_deco[nr]})
-							end
-						end-- if humidity
-					end-- if temperature
-				elseif height >= 0 then	-- if strand
-					local random = pr:next() -- random number ∊ {0..32767}
-					if random < 128 then
-						alphamg.grow_papyrus({x=x, y=height+1, z=z}, 3 + random%2) height = 3 or 4
-					end
+					elseif biome == bid_Savanna then
+						-- savanna
+						if random < 64 then -- p = 1/256
+							default.grow_new_acacia_tree({x=x, y=height+2, z=z})
+						elseif random < 512 then
+							-- dried little plants
+							local nr = random % table.getn(savanna_deco) + 1
+							set_deco({x=x, y=height+1, z=z}, {name=savanna_deco[nr]})
+						end
+					elseif biome == bid_RainForest then
+						-- djungle
+						if random < 1536 then -- p = ~1:20
+							alphamg.grow_new_jungle_tree({x=x, y=height, z=z})
+						elseif random < 8192 then
+							-- little plant
+							local nr = random % table.getn(djungle_deco) + 1
+							set_deco({x=x, y=height+1, z=z}, {name=djungle_deco[nr]})
+						end
+					elseif biome == bid_BrightForest then
+						if random < 1024 then -- 1:32
+							birches.grow_birch({x=x, y=height, z=z})
+						elseif random < 2048 then
+							local nr = random % table.getn(forest_deco) + 1
+							set_deco({x=x, y=height+1, z=z}, {name=forest_deco[nr]})
+						end
+					elseif biome == bid_Grassland then
+						if random < 12288 then
+							local nr = random % table.getn(grassland_deco) + 1
+							set_deco({x=x, y=height+1, z=z}, {name=grassland_deco[nr]})
+						end
+					elseif biome == bid_DarkForest then
+						if random < 1536 then -- ~1:20
+							default.grow_new_apple_tree({x=x, y=height+2, z=z})
+						elseif random < 2048 then
+							local nr = random % table.getn(forest_deco) + 1
+							set_deco({x=x, y=height+1, z=z}, {name=forest_deco[nr]})
+						end
+					elseif biome == bid_Beach then
+						if random < 128 then
+							alphamg.grow_papyrus({x=x, y=height+1, z=z}, 3 + random%2) height = 3 or 4
+						end
+					end-- biome check
 				end-- if height
 			end-- if minp < height < maxp
 
