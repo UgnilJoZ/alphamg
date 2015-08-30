@@ -30,7 +30,7 @@ alphamg.savanna_hum = -0.25
 alphamg.wet_hum = 0.5
 
 -- Because not every chunk is initialised with air, we need another way to check if we should override a node.
--- Solution: Lua Table with node IDs known to "grow" out of a chunk. Otherwise we have areas with cut trees.
+-- Solution: Lua Table with IDs of nodes known to "grow" out of a chunk. Otherwise we have areas with cut trees.
 alphamg.ignore_content = {}
 
 -- Biome IDs
@@ -42,6 +42,12 @@ bid_RainForest   = 4
 bid_Desert       = 5
 bid_Savanna      = 6
 bid_Taiga        = 7
+
+alphamg.biome_names = {[bid_Beach]="Beach",[bid_DarkForest]="Dark Forest",[bid_BrightForest]="Bright Forest",[bid_Grassland]="Grassland",
+	[bid_RainForest]="Rain Forest",[bid_Desert]="Desert",[bid_Savanna]="Savanna",[bid_Taiga]="Taiga"}
+
+alphamg.biome_IDs = {["Beach"]=bid_Beach,["Dark Forest"]=bid_DarkForest,["Bright Forest"]=bid_BrightForest,["Grassland"]=bid_Grassland,
+	["Rain Forest"]=bid_RainForest,["Desert"]=bid_Desert,["Savanna"]=bid_Savanna,["Taiga"]=bid_Taiga}
 
 dofile(minetest.get_modpath("alphamg_core").."/noise.lua")
 dofile(minetest.get_modpath("alphamg_core").."/handlers.lua")
@@ -135,8 +141,23 @@ function alphamg.chunkfunc(minp, maxp, seed)
 	local c_coal         = minetest.get_content_id("stone_with_coal")
 	local c_iron         = minetest.get_content_id("stone_with_iron")
 	local c_copper       = minetest.get_content_id("default:stone_with_copper")
+	local c_appletree    = minetest.get_content_id("default:tree")
+	local c_appleleaves  = minetest.get_content_id("default:leaves")
 	local c_jungletree   = minetest.get_content_id("default:jungletree")
 	local c_jungleleaves = minetest.get_content_id("default:jungleleaves")
+	local c_acaciatree   = minetest.get_content_id("default:acacia_tree")
+	local c_acacialeaves = minetest.get_content_id("default:acacia_leaves")
+	local c_pinetree     = minetest.get_content_id("default:pine_tree")
+	local c_pineneedles  = minetest.get_content_id("default:pine_needles")
+	local c_birchtree    = minetest.get_content_id("birches:tree")
+	local c_birchleaves  = minetest.get_content_id("birches:leaves")
+
+	local ignore_content = {[c_appletree]=true,
+		[c_appleleaves]=true, [c_jungletree]=true,
+		[c_jungleleaves]=true,
+		[c_acaciatree]=true,
+		[c_acacialeaves]=true, [c_pinetree]=true, [c_pineneedles]=true,
+		[c_birchtree]=true, [c_birchleaves]=true}
 
 	local cave_blacklist_nodes = {[c_sand]=true, [c_water]=true}
 
@@ -153,7 +174,7 @@ function alphamg.chunkfunc(minp, maxp, seed)
 	for z = minp.z,maxp.z do
 		for y = minp.y,maxp.y do
 			for x = minp.x,maxp.x do
-				if not alphamg.ignore_content[data[nixyz]] then -- if there is no wood/leaf/… at (x,y,z)
+				if not ignore_content[data[nixyz]] then -- if there is no wood/leaf/… at (x,y,z)
 					local height = heightmap[nixz]
 
 					-- above ground
@@ -203,10 +224,9 @@ function alphamg.chunkfunc(minp, maxp, seed)
 							data[nixyz] = c_air
 						end
 					end-- else (= if not y > height)
-
-					nixyz = nixyz + 1
-					nixz = nixz + 1
 				end
+				nixyz = nixyz + 1
+				nixz = nixz + 1
 			end-- for x
 			nixz = nixz - chulens.x
 		end-- for y
