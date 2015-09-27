@@ -32,6 +32,9 @@ alphamg.wet_hum = 0.5
 -- If in the right temperature range, generate grass land under this humidity.
 alphamg.dry_hum = -0.6
 
+-- Generate swamps over this humidity
+alphamg.sumpf_hum = 1.1
+
 -- Because not every chunk is initialised with air, we need another way to check if we should override a node.
 -- Solution: Lua Table with IDs of nodes known to "grow" out of a chunk. Otherwise we have areas with cut trees.
 alphamg.ignore_content = {}
@@ -45,12 +48,13 @@ bid_RainForest   = 4
 bid_Desert       = 5
 bid_Savanna      = 6
 bid_Taiga        = 7
+bid_Swamp        = 8
 
 alphamg.biome_names = {[bid_Beach]="Beach",[bid_DarkForest]="Dark Forest",[bid_BrightForest]="Bright Forest",[bid_Grassland]="Grassland",
-	[bid_RainForest]="Rain Forest",[bid_Desert]="Desert",[bid_Savanna]="Savanna",[bid_Taiga]="Taiga"}
+	[bid_RainForest]="Rain Forest",[bid_Desert]="Desert",[bid_Savanna]="Savanna",[bid_Taiga]="Taiga",[bid_Swamp]="Swamp"}
 
 alphamg.biome_IDs = {["Beach"]=bid_Beach,["Dark Forest"]=bid_DarkForest,["Bright Forest"]=bid_BrightForest,["Grassland"]=bid_Grassland,
-	["Rain Forest"]=bid_RainForest,["Desert"]=bid_Desert,["Savanna"]=bid_Savanna,["Taiga"]=bid_Taiga}
+	["Rain Forest"]=bid_RainForest,["Desert"]=bid_Desert,["Savanna"]=bid_Savanna,["Taiga"]=bid_Taiga,["Swamp"]=bid_Swamp}
 
 dofile(minetest.get_modpath("alphamg_core").."/noise.lua")
 dofile(minetest.get_modpath("alphamg_core").."/handlers.lua")
@@ -103,7 +107,9 @@ function alphamg.chunkfunc(minp, maxp, seed)
 			for x = minp.x,maxp.x do
 				nixz = nixz + 1
 				local temp = nvals_temperature[nixz]
-				if heightmap[nixz] < alphamg.strand_height then
+				if nvals_humidity[nixz] > alphamg.sumpf_hum then
+					biome_map[nixz] = bid_Swamp
+				elseif heightmap[nixz] < alphamg.strand_height then
 					biome_map[nixz] = bid_Beach
 				elseif temp < alphamg.snow_temp then
 					biome_map[nixz] = bid_Taiga
@@ -141,6 +147,7 @@ function alphamg.chunkfunc(minp, maxp, seed)
 	local c_desert_sand  = minetest.get_content_id("default:desert_sand")
 	local c_water        = minetest.get_content_id("water_source")
 	local c_ice          = minetest.get_content_id("default:ice")
+	local c_river        = minetest.get_content_id("default:river_water_source")
 	local c_coal         = minetest.get_content_id("stone_with_coal")
 	local c_iron         = minetest.get_content_id("stone_with_iron")
 	local c_copper       = minetest.get_content_id("default:stone_with_copper")
@@ -209,7 +216,8 @@ function alphamg.chunkfunc(minp, maxp, seed)
 									[bid_Beach  ] = c_sand        ,
 									[bid_Desert ] = c_desert_sand ,
 									[bid_Savanna] = c_dirt_wdg    ,
-									[bid_Taiga  ] = c_dirt_ws
+									[bid_Taiga  ] = c_dirt_ws     ,
+									[bid_Swamp  ] = c_river
 								}
 								data[nixyz] = materials[biome] or c_dirt_wg
 							else
