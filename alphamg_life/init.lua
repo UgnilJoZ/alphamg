@@ -82,7 +82,7 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures,
 						end
 					elseif biome == bid_RainForest then
 						-- djungle
-						if random < 2048 then -- p = ~1:16
+						if random < 4096 then -- p = ~1:8
 							alphamg.grow_new_jungle_tree({x=x, y=height, z=z})
 						elseif random < 8192 then
 							-- little plant
@@ -90,7 +90,7 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures,
 							set_deco({x=x, y=height+1, z=z}, {name=djungle_deco[nr]})
 						end
 					elseif biome == bid_BrightForest then
-						if random < 1024 then -- 1:32
+						if random < 1536 then -- ~1:20
 							birches.grow_birch({x=x, y=height, z=z})
 						elseif random < 2048 then
 							local nr = random % table.getn(forest_deco) + 1
@@ -102,7 +102,7 @@ function alphamg.alphamg_life(vm, minp, maxp, heightmap, humidity, temperatures,
 							set_deco({x=x, y=height+1, z=z}, {name=grassland_deco[nr]})
 						end
 					elseif biome == bid_DarkForest then
-						if random < 1536 then -- ~1:20
+						if random < 2024 then -- ~1:16
 							default.grow_new_apple_tree({x=x, y=height+2, z=z})
 						elseif random < 2048 then
 							local nr = random % table.getn(forest_deco) + 1
